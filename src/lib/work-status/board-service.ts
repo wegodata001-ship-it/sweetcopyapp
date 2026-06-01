@@ -1,4 +1,3 @@
-﻿// @ts-nocheck
 import { UserRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { formatElapsedMs, resolvePresenceState, type WorkPresenceState } from "@/lib/work-status/presence";
@@ -85,7 +84,7 @@ async function stepProgress(taskId: string, employeeId: string, groupId: string 
 }
 
 export async function loadWorkStatusBoard(): Promise<WorkStatusBoardRow[]> {
-  const users = await prisma.hLWaitUser.findMany({
+  const users = await prisma.user.findMany({
     where: {
       isActive: true,
       role: { in: [UserRole.EMPLOYEE, UserRole.ADMIN, UserRole.SUPER_ADMIN] },
@@ -181,7 +180,7 @@ export async function loadWorkStatusBoard(): Promise<WorkStatusBoardRow[]> {
 }
 
 export async function loadWorkStatusMe(userId: string) {
-  const u = await prisma.hLWaitUser.findUnique({
+  const u = await prisma.user.findUnique({
     where: { id: userId },
     select: {
       id: true,

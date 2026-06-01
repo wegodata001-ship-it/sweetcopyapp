@@ -1,4 +1,3 @@
-﻿// @ts-nocheck
 /**
  * בניית תבניות מייל להתראות — השליחה עצמה ב-notification-email-pipeline.
  */
@@ -127,7 +126,7 @@ export async function buildEmailForNotification(
       const isManager = payload.roleTarget === "ADMIN";
       let employeeName = "";
       const uid = String(m.subjectUserId ?? payload.recipientUserId);
-      const u = await prisma.hLWaitUser.findUnique({
+      const u = await prisma.user.findUnique({
         where: { id: uid },
         select: { fullName: true },
       });

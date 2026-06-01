@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/auth/password";
+import { UserRole } from "@prisma/client";
 
-/** Creates first admin from SUPER_ADMIN_EMAIL / SUPER_ADMIN_PASSWORD if no users exist */
+/** יוצר SUPER_ADMIN ראשון מ-SUPER_ADMIN_EMAIL / SUPER_ADMIN_PASSWORD אם אין משתמשים */
 export async function ensureBootstrapSuperAdmin(): Promise<void> {
-  const count = await prisma.hLWaitUser.count();
+  const count = await prisma.user.count();
   if (count > 0) return;
 
   const email = process.env.SUPER_ADMIN_EMAIL?.trim().toLowerCase();
@@ -11,13 +12,14 @@ export async function ensureBootstrapSuperAdmin(): Promise<void> {
   if (!email || !password) return;
 
   const passwordHash = await hashPassword(password);
-  await prisma.hLWaitUser.create({
+  await prisma.user.create({
     data: {
-      name: "admin",
+      fullName: "Super Admin",
       email,
       passwordHash,
-      role: "admin",
+      role: UserRole.SUPER_ADMIN,
       isActive: true,
+      mustChangePassword: false,
     },
   });
 }

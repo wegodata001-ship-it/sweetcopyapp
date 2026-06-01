@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { UserRole } from "@prisma/client";
 import { cookies } from "next/headers";
-import { prisma } from "@/lib/prisma";
+import { prismaAny } from "@/lib/prisma";
 import { verifySessionToken, COOKIE_NAME } from "@/lib/auth/jwt";
 import { appendRefreshedSessionCookie } from "@/lib/auth/reissue-session";
 import { getPermissionStringsForUser } from "@/lib/auth/user-permissions";
-import { toApiUser } from "@/lib/auth/user-dto";
-import { mapRoleForClient, parseSessionRole } from "@/lib/auth/session-role";
 
 const FAST_HEADERS = { "Cache-Control": "private, max-age=15" };
 
@@ -23,30 +22,59 @@ export async function GET(req: NextRequest) {
 
   const sync = req.nextUrl.searchParams.get("sync") === "1";
 
-  const row = await prisma.hLWaitUser.findUnique({
-    where: { id: session.userId },
-    select: { id: true, name: true, email: true, role: true, isActive: true },
-  });
+  const user = (await prismaAny.user.findUnique({
+    where: { id: session.sub },
+    select: {
+      id: true,
+      fullName: true,
+      email: true,
+      nationalId: true,
+      phone: true,
+      role: true,
+      isActive: true,
+      hourlyRate: true,
+      language: true,
+      mustChangePassword: true,
+    },
+  })) as {
+    id: string;
+    fullName: string;
+    email: string;
+    nationalId: string | null;
+    phone: string | null;
+    role: UserRole;
+    isActive: boolean;
+    hourlyRate: number;
+    language: string;
+    mustChangePassword: boolean;
+  } | null;
 
-  if (!row || !row.isActive) {
+  if (!user || !user.isActive) {
     return NextResponse.json({ ok: true, user: null });
   }
 
-  const user = toApiUser(row);
-  const role = parseSessionRole(row.role) ?? session.role;
-
   if (sync) {
-    const permissions = await getPermissionStringsForUser(user.id, role);
+    const permissions = await getPermissionStringsForUser(user.id, user.role);
     const res = NextResponse.json({
       ok: true,
-      user: { ...user, role: mapRoleForClient(role), permissions },
+      user: {
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        nationalId: user.nationalId,
+        phone: user.phone,
+        role: user.role,
+        hourlyRate: user.hourlyRate,
+        language: user.language,
+        mustChangePassword: user.mustChangePassword,
+        permissions,
+      },
     });
     await appendRefreshedSessionCookie(res, {
       id: user.id,
       email: user.email,
-      name: user.fullName,
-      role,
-      mustChangePassword: false,
+      role: user.role,
+      mustChangePassword: user.mustChangePassword,
       permissions,
     });
     return res;
@@ -56,8 +84,15 @@ export async function GET(req: NextRequest) {
     {
       ok: true,
       user: {
-        ...user,
-        role: mapRoleForClient(role),
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        nationalId: user.nationalId,
+        phone: user.phone,
+        role: user.role,
+        hourlyRate: user.hourlyRate,
+        language: user.language,
+        mustChangePassword: user.mustChangePassword,
         permissions: session.permissions,
       },
     },

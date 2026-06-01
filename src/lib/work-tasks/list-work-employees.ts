@@ -1,4 +1,3 @@
-﻿// @ts-nocheck
 import { UserRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { invalidateEmployeeAssigneeCache } from "@/lib/work-tasks/employee-assignee-cache";
@@ -16,7 +15,7 @@ export type WorkEmployeeRow = {
  * מבטיח Employee.id מקושר לכל User.
  */
 export async function listEmployeesForWorkOrder(): Promise<WorkEmployeeRow[]> {
-  const users = await prisma.hLWaitUser.findMany({
+  const users = await prisma.user.findMany({
     where: {
       isActive: true,
       role: { in: [UserRole.EMPLOYEE, UserRole.ADMIN, UserRole.SUPER_ADMIN] },
@@ -33,7 +32,7 @@ export async function listEmployeesForWorkOrder(): Promise<WorkEmployeeRow[]> {
       const created = await prisma.employee.create({
         data: { name: (u.fullName || "עובד").trim() },
       });
-      await prisma.hLWaitUser.update({
+      await prisma.user.update({
         where: { id: u.id },
         data: { employeeId: created.id },
       });

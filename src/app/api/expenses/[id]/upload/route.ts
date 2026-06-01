@@ -1,13 +1,10 @@
 /**
- * POST /api/expenses/[id]/upload
- *
- * Upload a receipt/attachment for an expense.
- * Stores the file in:  <SUPABASE_STORAGE_BUCKET>/expenses/<timestamp>-<name>
- * Saves to DB:          file_url, file_name, bucket_name
+ * POST /api/expenses/[id]/upload — מצרף קובץ למסמך הוצאה (FinancialDocument).
  */
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireDb } from "@/lib/api-route";
+import { parsePayload } from "@/lib/finance/document-payload";
 import { uploadDocument } from "@/lib/storage/document-upload";
 
 export const dynamic = "force-dynamic";
@@ -23,9 +20,12 @@ export async function POST(req: NextRequest, ctx: Ctx) {
 
   const { id } = await ctx.params;
 
-  const existing = await prisma.hLWaitExpense.findUnique({ where: { id } });
-  if (!existing) {
-    return NextResponse.json({ ok: false, error: "הוצאה לא נמצאה" }, { status: 404 });
+  const existing = await prisma.financialDocument.findUnique({
+    where: { id },
+    select: { id: true, metadata: true, category: true },
+  });
+  if (!existing || existing.category !== "הוצאה") {
+    return NextResponse.json({ ok: false, error: "מסמך הוצאה לא נמצא" }, { status: 404 });
   }
 
   const formData = await req.formData();
@@ -46,8 +46,6 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     );
   }
 
-  console.log("BUCKET:", process.env.SUPABASE_STORAGE_BUCKET);
-
   const buffer = Buffer.from(await file.arrayBuffer());
   const result = await uploadDocument({
     buffer,
@@ -63,24 +61,29 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     );
   }
 
-  const updated = await prisma.hLWaitExpense.update({
+  const payload = parsePayload(existing.metadata);
+  const nextMeta =
+    payload && payload.kind === "expense"
+      ? {
+          ...payload,
+          receiptFileUrl: result.file_url,
+          receiptFileName: result.file_name,
+        }
+      : existing.metadata;
+
+  await prisma.financialDocument.update({
     where: { id },
-    data: {
-      fileUrl: result.file_url,
-      fileName: result.file_name,
-      bucketName: result.bucket_name,
-      storagePath: result.storage_path,
-    },
+    data: { metadata: nextMeta as object },
   });
 
   return NextResponse.json({
     ok: true,
     data: {
-      id: updated.id,
-      file_url: updated.fileUrl,
-      file_name: updated.fileName,
-      bucket_name: updated.bucketName,
-      storage_path: updated.storagePath,
+      id,
+      file_url: result.file_url,
+      file_name: result.file_name,
+      bucket_name: result.bucket_name,
+      storage_path: result.storage_path,
     },
   });
 }

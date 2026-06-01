@@ -1,9 +1,5 @@
 /**
- * POST /api/payments/[id]/upload
- *
- * Upload a payment proof/receipt.
- * Stores the file in:  <SUPABASE_STORAGE_BUCKET>/payments/<timestamp>-<name>
- * Saves to DB:          file_url, file_name, bucket_name
+ * POST /api/payments/[id]/upload — שומר קבלה ב-notes של תשלום (מודל Payment).
  */
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -23,7 +19,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
 
   const { id } = await ctx.params;
 
-  const existing = await prisma.hLWaitPayment.findUnique({ where: { id } });
+  const existing = await prisma.payment.findUnique({ where: { id }, select: { id: true, notes: true } });
   if (!existing) {
     return NextResponse.json({ ok: false, error: "תשלום לא נמצא" }, { status: 404 });
   }
@@ -46,8 +42,6 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     );
   }
 
-  console.log("BUCKET:", process.env.SUPABASE_STORAGE_BUCKET);
-
   const buffer = Buffer.from(await file.arrayBuffer());
   const result = await uploadDocument({
     buffer,
@@ -63,13 +57,25 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     );
   }
 
-  const updated = await prisma.hLWaitPayment.update({
+  let attachmentMeta: Record<string, string> = {};
+  try {
+    if (existing.notes?.trim().startsWith("{")) {
+      attachmentMeta = JSON.parse(existing.notes) as Record<string, string>;
+    }
+  } catch {
+    attachmentMeta = { text: existing.notes ?? "" };
+  }
+
+  const updated = await prisma.payment.update({
     where: { id },
     data: {
-      fileUrl: result.file_url,
-      fileName: result.file_name,
-      bucketName: result.bucket_name,
-      storagePath: result.storage_path,
+      notes: JSON.stringify({
+        ...attachmentMeta,
+        receiptFileUrl: result.file_url,
+        receiptFileName: result.file_name,
+        receiptBucket: result.bucket_name,
+        receiptStoragePath: result.storage_path,
+      }),
     },
   });
 
@@ -77,10 +83,10 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     ok: true,
     data: {
       id: updated.id,
-      file_url: updated.fileUrl,
-      file_name: updated.fileName,
-      bucket_name: updated.bucketName,
-      storage_path: updated.storagePath,
+      file_url: result.file_url,
+      file_name: result.file_name,
+      bucket_name: result.bucket_name,
+      storage_path: result.storage_path,
     },
   });
 }

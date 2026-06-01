@@ -1,4 +1,3 @@
-﻿// @ts-nocheck
 import type { Prisma } from "@prisma/client";
 import { prisma, prismaAny } from "@/lib/prisma";
 import { parseNum } from "@/lib/format-shekel";
@@ -137,7 +136,7 @@ export async function saveProductHistoryFromItems(items: { itemName: string }[])
 
   await Promise.all(
     names.map(async (name) => {
-      await prisma.hLWaitProduct.upsert({
+      await prisma.product.upsert({
         where: { name },
         update: {},
         create: { name },
@@ -158,7 +157,7 @@ export async function attachProductsToItems<
     items.map(async (item) => {
       const name = item.itemName.trim();
       if (!name) return item;
-      const product = await prisma.hLWaitProduct.upsert({
+      const product = await prisma.product.upsert({
         where: { name },
         update: {},
         create: { name },
@@ -606,9 +605,9 @@ export async function syncCheckPaymentsForDocument(documentId: string): Promise<
 async function ensureCustomerByName(name: string): Promise<string | null> {
   const n = name.trim();
   if (!n) return null;
-  const found = await prisma.hLWaitCustomer.findFirst({ where: { name: n } });
+  const found = await prisma.customer.findFirst({ where: { name: n } });
   if (found) return found.id;
-  const c = await prisma.hLWaitCustomer.create({ data: { name: n } });
+  const c = await prisma.customer.create({ data: { name: n } });
   return c.id;
 }
 
@@ -637,7 +636,7 @@ async function deleteOrphanCheckRowsForDocument(
 }
 
 export async function syncCashFlowForPayment(paymentId: string): Promise<void> {
-  const payment = await prisma.hLWaitPayment.findUnique({
+  const payment = await prisma.payment.findUnique({
     where: { id: paymentId },
     include: {
       customer: { select: { id: true, name: true } },

@@ -1,4 +1,3 @@
-﻿// @ts-nocheck
 import { prisma } from "@/lib/prisma";
 import { hasRecentNotification } from "@/lib/notifications/dedupe";
 import { notifyAdminRecipients, notifyEmployee } from "@/lib/notifications/dispatch";
@@ -11,7 +10,7 @@ export async function resolveEmployeeUserIds(employeeId: string): Promise<string
   const empId = String(employeeId).trim();
   if (!empId) return [];
 
-  const linked = await prisma.hLWaitUser.findMany({
+  const linked = await prisma.user.findMany({
     where: { employeeId: empId, isActive: true },
     select: { id: true, fullName: true },
   });
@@ -19,7 +18,7 @@ export async function resolveEmployeeUserIds(employeeId: string): Promise<string
     return linked.map((u) => u.id);
   }
 
-  const asUser = await prisma.hLWaitUser.findUnique({
+  const asUser = await prisma.user.findUnique({
     where: { id: empId },
     select: { id: true, isActive: true },
   });
@@ -106,7 +105,7 @@ export async function notifyTaskCompleted(params: {
   const userIds = await resolveEmployeeUserIds(params.employeeId);
   let employeeName = employee?.name?.trim();
   if (!employeeName && userIds[0]) {
-    const u = await prisma.hLWaitUser.findUnique({
+    const u = await prisma.user.findUnique({
       where: { id: userIds[0] },
       select: { fullName: true },
     });

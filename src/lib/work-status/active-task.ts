@@ -1,4 +1,3 @@
-﻿// @ts-nocheck
 import { prisma } from "@/lib/prisma";
 
 /** מפעיל משימה אחת — סוגר קודמת ומעדכן User */
@@ -13,7 +12,7 @@ export async function activateEmployeeTask(userId: string, taskId: string) {
       where: { id: taskId },
       data: { status: "IN_PROGRESS", startedAt: now, isActive: true },
     }),
-    prisma.hLWaitUser.update({
+    prisma.user.update({
       where: { id: userId },
       data: { activeTaskId: taskId, activeTaskStartedAt: now, lastSeenAt: now },
     }),
@@ -26,7 +25,7 @@ export async function clearUserActiveTask(userId: string) {
       where: { assignedToUserId: userId, isActive: true },
       data: { isActive: false },
     }),
-    prisma.hLWaitUser.update({
+    prisma.user.update({
       where: { id: userId },
       data: { activeTaskId: null, activeTaskStartedAt: null },
     }),
@@ -34,7 +33,7 @@ export async function clearUserActiveTask(userId: string) {
 }
 
 export async function touchUserPresence(userId: string) {
-  await prisma.hLWaitUser.update({
+  await prisma.user.update({
     where: { id: userId },
     data: { lastSeenAt: new Date() },
   });

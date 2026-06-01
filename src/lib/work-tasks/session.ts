@@ -1,4 +1,3 @@
-﻿// @ts-nocheck
 import { prisma } from "@/lib/prisma";
 
 /** לכל היותר משמרת משימות אחת פתוחה לכל כרטיס עובד */

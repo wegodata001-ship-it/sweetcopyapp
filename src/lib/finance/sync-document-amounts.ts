@@ -1,4 +1,3 @@
-﻿// @ts-nocheck
 import { prisma } from "@/lib/prisma";
 import { parsePayload, paymentLinesTotal } from "@/lib/finance/document-payload";
 
@@ -25,7 +24,7 @@ export async function syncFinancialDocumentPaymentTotals(documentId: string): Pr
   }
 
   const payload = parsePayload(doc.metadata as unknown);
-  const agg = await prisma.hLWaitPayment.aggregate({
+  const agg = await prisma.payment.aggregate({
     where: { documentId },
     _sum: { amount: true },
   });

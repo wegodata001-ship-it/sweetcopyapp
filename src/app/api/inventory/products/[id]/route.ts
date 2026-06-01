@@ -1,57 +1,46 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireDb } from "@/lib/api-route";
 
-export const dynamic = "force-dynamic";
-type Ctx = { params: Promise<{ id: string }> };
-
-export async function GET(_req: NextRequest, ctx: Ctx) {
+export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const block = await requireDb();
   if (block) return block;
   const { id } = await ctx.params;
-  const row = await prisma.hLWaitProduct.findUnique({
-    where: { id },
-    include: { inventory: true, supplier: { select: { id: true, name: true } } },
-  });
-  if (!row) return NextResponse.json({ ok: false, error: "לא נמצא" }, { status: 404 });
-  return NextResponse.json({ ok: true, data: row });
-}
-
-export async function PATCH(req: NextRequest, ctx: Ctx) {
-  const block = await requireDb();
-  if (block) return block;
-  const { id } = await ctx.params;
-  const body = (await req.json()) as {
-    name?: string;
-    sku?: string | null;
-    currentStock?: number;
-    minStock?: number;
-    salePrice?: number;
-    supplierId?: string | null;
-    isActive?: boolean;
-  };
-  const row = await prisma.hLWaitProduct.update({
-    where: { id },
-    data: {
-      ...(body.name?.trim()                     ? { name: body.name.trim() }            : {}),
-      ...(body.sku !== undefined                 ? { sku: body.sku?.trim() || null }     : {}),
-      ...(typeof body.currentStock === "number"  ? { currentStock: body.currentStock }   : {}),
-      ...(typeof body.minStock === "number"      ? { minStock: body.minStock }           : {}),
-      ...(typeof body.salePrice === "number"     ? { salePrice: body.salePrice }         : {}),
-      ...(body.supplierId !== undefined          ? { supplierId: body.supplierId || null } : {}),
-      ...(typeof body.isActive === "boolean"     ? { isActive: body.isActive }           : {}),
-    },
-  });
-  return NextResponse.json({ ok: true, data: row });
-}
-
-export async function DELETE(_req: NextRequest, ctx: Ctx) {
-  const block = await requireDb();
-  if (block) return block;
-  const { id } = await ctx.params;
+  if (!id?.trim()) {
+    return NextResponse.json({ ok: false, error: "חסר מזהה" }, { status: 400 });
+  }
   try {
-    await prisma.hLWaitProduct.update({ where: { id }, data: { isActive: false } });
-    return NextResponse.json({ ok: true });
+    const body = (await req.json()) as {
+      minStock?: number;
+      categoryId?: string | null;
+      supplierId?: string | null;
+    };
+    const data: {
+      minStock?: number;
+      categoryId?: string | null;
+      supplierId?: string | null;
+    } = {};
+    if (body.minStock !== undefined) {
+      data.minStock = Math.max(0, Math.trunc(Number(body.minStock)));
+    }
+    if (body.categoryId !== undefined) {
+      data.categoryId = body.categoryId?.trim() || null;
+    }
+    if (body.supplierId !== undefined) {
+      data.supplierId = body.supplierId?.trim() || null;
+    }
+    if (Object.keys(data).length === 0) {
+      return NextResponse.json({ ok: false, error: "אין שדות לעדכון" }, { status: 400 });
+    }
+    const row = await prisma.product.update({
+      where: { id: id.trim() },
+      data,
+      include: {
+        category: { select: { id: true, name: true } },
+        supplier: { select: { id: true, name: true } },
+      },
+    });
+    return NextResponse.json({ ok: true, data: row });
   } catch (e) {
     return NextResponse.json(
       { ok: false, error: e instanceof Error ? e.message : "שגיאה" },

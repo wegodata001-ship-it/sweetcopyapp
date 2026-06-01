@@ -1,4 +1,3 @@
-﻿// @ts-nocheck
 import { PDFDocument } from "pdf-lib";
 import { prisma } from "@/lib/prisma";
 import { formatCurrencyILS, formatDateIL } from "@/lib/pdf/format-currency-pdf";
@@ -14,7 +13,7 @@ import {
 import { loadInvoicePdfFonts, paymentMethodLabel, safeFilePart } from "@/lib/pdf/pdf-helpers";
 
 export async function generatePaymentPdfBytes(paymentId: string): Promise<Uint8Array> {
-  const pay = await prisma.hLWaitPayment.findUnique({
+  const pay = await prisma.payment.findUnique({
     where: { id: paymentId },
     include: { customer: true, document: true },
   });

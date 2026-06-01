@@ -1,4 +1,3 @@
-﻿// @ts-nocheck
 import { prisma, prismaAny } from "@/lib/prisma";
 import { isDeliverableEmail } from "@/lib/email/config";
 import { resolveEmailImportance } from "@/lib/email/importance";
@@ -37,7 +36,7 @@ export async function processNotificationEmail(
   payload: NotificationEmailPayload,
   priority?: NotificationPriorityLevel | string | null,
 ): Promise<void> {
-  const user = await prisma.hLWaitUser.findUnique({
+  const user = await prisma.user.findUnique({
     where: { id: payload.recipientUserId },
     select: { id: true, email: true, role: true, isActive: true },
   });

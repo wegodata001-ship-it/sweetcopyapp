@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireDb } from "@/lib/api-route";
 
@@ -14,9 +14,19 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: true, data: [] }, { headers: SEARCH_HEADERS });
   }
   try {
-    const rows = await prisma.hLWaitCustomer.findMany({
-      where: { name: { contains: q, mode: "insensitive" } },
-      select: { id: true, name: true, phone: true, email: true, balance: true },
+    const rows = await prisma.customer.findMany({
+      where: {
+        name: {
+          contains: q,
+          mode: "insensitive",
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        customerType: true,
+      },
       orderBy: { name: "asc" },
       take: 10,
     });
@@ -36,18 +46,20 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as {
       name: string;
       phone?: string | null;
-      email?: string | null;
+      customerType?: string | null;
+      openingBalance?: number;
     };
     if (!body.name?.trim()) {
       return NextResponse.json({ ok: false, error: "חסר שם" }, { status: 400 });
     }
-    const row = await prisma.hLWaitCustomer.create({
+    const row = await prisma.customer.create({
       data: {
         name: body.name.trim(),
         phone: body.phone?.trim() || null,
-        email: body.email?.trim() || null,
+        customerType: body.customerType?.trim() || null,
+        openingBalance: body.openingBalance ?? 0,
       },
-      select: { id: true, name: true, phone: true, email: true },
+      select: { id: true, name: true, phone: true, customerType: true },
     });
     return NextResponse.json({ ok: true, data: row });
   } catch (e) {

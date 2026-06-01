@@ -1,4 +1,3 @@
-﻿// @ts-nocheck
 import { prisma } from "@/lib/prisma";
 import type { VatMode } from "@/lib/finance/document-payload";
 
@@ -121,7 +120,7 @@ export async function searchProductPickerCatalog(params: {
       take: fetchN,
       select: spSelect,
     }),
-    prisma.hLWaitProduct.findMany({
+    prisma.product.findMany({
       where: nameFilter ? { name: nameFilter } : undefined,
       orderBy: { name: "asc" },
       take: fetchN,

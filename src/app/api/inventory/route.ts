@@ -1,72 +1,64 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireDb } from "@/lib/api-route";
 
-export const dynamic = "force-dynamic";
-
+/** רשימת מוצרים עם מלאי (תאימות + טעינה מהירה) */
 export async function GET() {
   const block = await requireDb();
   if (block) return block;
-  const products = await prisma.hLWaitProduct.findMany({
-    where: { isActive: true },
-    orderBy: { name: "asc" },
-    include: { inventory: true, supplier: { select: { name: true } } },
-  });
-  const data = products.map((p) => ({
-    id:           p.id,
-    name:         p.name,
-    sku:          p.sku,
-    currentStock: Number(p.currentStock),
-    minStock:     Number(p.minStock),
-    salePrice:    Number(p.salePrice),
-    isActive:     p.isActive,
-    supplierId:   p.supplierId,
-    supplierName: p.supplier?.name ?? null,
-    locations:    p.inventory.map((i) => ({
-      location: i.location,
-      quantity: Number(i.quantity),
-    })),
-  }));
-  return NextResponse.json({ ok: true, data });
+  try {
+    const rows = await prisma.product.findMany({
+      orderBy: { name: "asc" },
+      select: {
+        id: true,
+        name: true,
+        currentStock: true,
+        minStock: true,
+        category: { select: { id: true, name: true } },
+        supplier: { select: { id: true, name: true } },
+      },
+    });
+    return NextResponse.json({ ok: true, data: rows });
+  } catch (e) {
+    return NextResponse.json(
+      { ok: false, error: e instanceof Error ? e.message : "שגיאה" },
+      { status: 500 },
+    );
+  }
 }
 
+/** יצירת מוצר בסיסי למלאי (אופציונלי) */
 export async function POST(req: NextRequest) {
   const block = await requireDb();
   if (block) return block;
+  try {
+    const body = (await req.json()) as {
+      name: string;
+      minStock?: number;
+      currentStock?: number;
+      categoryId?: string | null;
+      supplierId?: string | null;
+    };
+    if (!body.name?.trim()) {
+      return NextResponse.json({ ok: false, error: "חסר שם מוצר" }, { status: 400 });
+    }
+    const minStock = Math.max(0, Math.trunc(Number(body.minStock ?? 0)));
+    const currentStock = Math.max(0, Math.trunc(Number(body.currentStock ?? 0)));
 
-  const body = (await req.json()) as {
-    name: string;
-    sku?: string | null;
-    salePrice?: number;
-    currentStock?: number;
-    minStock?: number;
-    supplierId?: string | null;
-  };
-
-  if (!body.name?.trim()) {
-    return NextResponse.json({ ok: false, error: "שם מוצר חובה" }, { status: 400 });
-  }
-
-  const product = await prisma.hLWaitProduct.create({
-    data: {
-      name:         body.name.trim(),
-      sku:          body.sku?.trim() || null,
-      salePrice:    body.salePrice    ?? 0,
-      currentStock: body.currentStock ?? 0,
-      minStock:     body.minStock     ?? 0,
-      supplierId:   body.supplierId   || null,
-    },
-  });
-
-  if (product.currentStock !== undefined) {
-    await prisma.hLWaitInventory.create({
+    const row = await prisma.product.create({
       data: {
-        productId: product.id,
-        location:  "default",
-        quantity:  product.currentStock,
+        name: body.name.trim(),
+        minStock,
+        currentStock,
+        categoryId: body.categoryId?.trim() || null,
+        supplierId: body.supplierId?.trim() || null,
       },
     });
+    return NextResponse.json({ ok: true, data: row });
+  } catch (e) {
+    return NextResponse.json(
+      { ok: false, error: e instanceof Error ? e.message : "שגיאה" },
+      { status: 500 },
+    );
   }
-
-  return NextResponse.json({ ok: true, data: product });
 }
