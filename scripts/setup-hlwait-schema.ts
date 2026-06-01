@@ -67,7 +67,7 @@ async function main() {
 
   try {
     run("npx prisma db push --schema=prisma/hlwait.prisma --skip-generate");
-    run("npm run prisma:hlwait:generate");
+    run("npx prisma generate");
   } catch (e) {
     console.warn("\n[warn] prisma db push failed — trying SQL migration file...\n", e);
     const sqlPath = join(ROOT, "supabase", "migrations", "20260601120000_hlwait_schema.sql");
@@ -75,7 +75,7 @@ async function main() {
     const tmp = join(OUT, "hlwait-bootstrap-run.sql");
     writeFileSync(tmp, sql, "utf8");
     run(`npx prisma db execute --file "${tmp}"`);
-    run("npm run prisma:hlwait:generate");
+    run("npx prisma generate");
   }
 
   console.log("\n--- prisma db pull (print only, saved to diagnostics) ---\n");

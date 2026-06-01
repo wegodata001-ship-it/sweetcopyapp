@@ -138,7 +138,7 @@ npm run tenant:bootstrap -- new_client_demo
 | `npm run demo:setup` | push + seed + bootstrap schema |
 | `npm run tenant:bootstrap -- demo` | טבלאות + RLS + grants |
 | `npx prisma db seed` | משתמשי demo + מלאי לדוגמה |
-| `npm run prisma:hlwait:generate` | Prisma client ל-tenant |
+| `npx prisma generate` | Prisma client (schema `hlwait` ב-`prisma/schema.prisma`) |
 
 ---
 
