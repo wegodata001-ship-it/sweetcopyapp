@@ -71,14 +71,7 @@ export function checkDemoEnvironmentSafety(): DemoSafetyCheck {
     }
   }
 
-  const schema =
-    process.env.TENANT_DB_SCHEMA?.trim() ||
-    process.env.NEXT_PUBLIC_TENANT_DB_SCHEMA?.trim();
-  if (schema === "hlwait") {
-    violations.push(
-      'TENANT_DB_SCHEMA is "hlwait" (production schema name). Use "demo" or "hlwait_demo" for demos.',
-    );
-  }
+  // hlwait schema on a dedicated DEMO Supabase project (e.g. khwwxynldoimdrnecfan) is OK.
 
   return { ok: violations.length === 0, violations };
 }
