@@ -1,0 +1,9 @@
+{
+  "name": "sweetcopyapp",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Monorepo root — Next.js app lives in wego-erp-v1. Set Vercel Root Directory to wego-erp-v1.",
+  "scripts": {
+    "build": "node scripts/check-vercel-root.mjs"
+  }
+}

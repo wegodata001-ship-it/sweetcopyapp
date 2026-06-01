@@ -1,8 +1,4 @@
-import {
-  createClient,
-  type SupabaseClient,
-  type PostgrestQueryBuilder,
-} from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import {
   resolveTenantSchema,
   type TenantSchemaName,
@@ -12,9 +8,10 @@ import type { TenantDatabase } from "./types";
 
 export type TenantSupabaseClient = SupabaseClient & {
   tenantSchema: TenantSchemaName;
-  fromTenant: <T extends TenantTableName>(
-    table: T,
-  ) => PostgrestQueryBuilder<TenantDatabase, TenantDatabase[T], T>;
+  /** Query builder for a table in the active tenant schema */
+  fromTenant: (table: TenantTableName) => ReturnType<
+    ReturnType<SupabaseClient["schema"]>["from"]
+  >;
 };
 
 type ClientOptions = {
@@ -65,11 +62,7 @@ export function createTenantSupabaseClient(
   client.tenantSchema = tenantSchema;
 
   client.fromTenant = <T extends TenantTableName>(table: T) => {
-    return base.schema(tenantSchema).from(table) as PostgrestQueryBuilder<
-      TenantDatabase,
-      TenantDatabase[T],
-      T
-    >;
+    return base.schema(tenantSchema).from(table);
   };
 
   return client;
