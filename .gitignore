@@ -1,16 +1,48 @@
-# OS / editor
-.DS_Store
-Thumbs.db
-debug.log
-*.log
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# Secrets
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+tmp/
+**/tmp/
+.DS_Store
+debug.log
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files — never commit secrets
 .env
 .env.local
-**/.env.local
+.env.*.local
+!.env.example
+!.env.demo.example
 
-# Dependencies & build (per package)
-**/node_modules/
-**/.next/
-**/out/
-**/.vercel/
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
