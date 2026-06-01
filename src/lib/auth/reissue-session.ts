@@ -1,21 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { COOKIE_NAME, signSessionToken } from "@/lib/auth/jwt";
+import {
+  COOKIE_NAME,
+  signSessionToken,
+  SESSION_COOKIE_OPTIONS,
+} from "@/lib/auth/jwt";
 import { getPermissionStringsForUser } from "@/lib/auth/user-permissions";
 import type { SessionRole } from "@/lib/auth/session-role";
 import { parseSessionRole } from "@/lib/auth/session-role";
 
-const COOKIE_OPTIONS = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "lax" as const,
-  path: "/",
-  maxAge: 60 * 60 * 24 * 7,
-};
-
 export type SessionReissueUser = {
   id: string;
   email: string;
+  name?: string;
   role: SessionRole;
   mustChangePassword: boolean;
   permissions?: string[];
@@ -29,7 +26,7 @@ export async function appendRefreshedSessionCookie(
     typeof user === "string"
       ? await prisma.hLWaitUser.findUnique({
           where: { id: user },
-          select: { id: true, email: true, role: true, isActive: true },
+          select: { id: true, name: true, email: true, role: true, isActive: true },
         })
       : null;
 
@@ -38,6 +35,7 @@ export async function appendRefreshedSessionCookie(
       ? base
       : {
           id: user.id,
+          name: user.name ?? user.id,
           email: user.email,
           role: user.role,
           isActive: true,
@@ -53,12 +51,13 @@ export async function appendRefreshedSessionCookie(
       : await getPermissionStringsForUser(row.id, role);
 
   const token = await signSessionToken({
-    sub: row.id,
+    userId: row.id,
     email: row.email,
+    name: row.name,
     role,
     permissions,
     mustChangePassword: false,
   });
-  res.cookies.set(COOKIE_NAME, token, COOKIE_OPTIONS);
+  res.cookies.set(COOKIE_NAME, token, SESSION_COOKIE_OPTIONS);
   return true;
 }

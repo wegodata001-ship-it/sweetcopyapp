@@ -21,3 +21,10 @@ export function isEmployeeRole(role: string): boolean {
 export function isPureEmployeeRole(role: string): boolean {
   return isEmployeeRole(role);
 }
+
+/** Maps hlwait role → client AuthUser role */
+export function mapRoleForClient(role: string): "SUPER_ADMIN" | "ADMIN" | "EMPLOYEE" {
+  const r = parseSessionRole(role);
+  if (r === "admin") return "ADMIN";
+  return "EMPLOYEE";
+}

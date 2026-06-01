@@ -148,6 +148,10 @@ model HLWaitPayment {
   paymentMethod String   @default("cash") @map("payment_method")
   notes         String?
   paidAt        DateTime @default(now()) @map("paid_at") @db.Timestamptz(6)
+  fileUrl       String?  @map("file_url")
+  fileName      String?  @map("file_name")
+  bucketName    String?  @map("bucket_name")
+  storagePath   String?  @map("storage_path")
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -205,6 +209,10 @@ model HLWaitExpense {
   amount      Decimal  @db.Decimal(14, 2)
   description String   @default("")
   expenseDate DateTime @default(now()) @map("expense_date") @db.Date
+  fileUrl     String?  @map("file_url")
+  fileName    String?  @map("file_name")
+  bucketName  String?  @map("bucket_name")
+  storagePath String?  @map("storage_path")
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -224,6 +232,10 @@ model HLWaitIncome {
   amount      Decimal  @db.Decimal(14, 2)
   description String   @default("")
   incomeDate  DateTime @default(now()) @map("income_date") @db.Date
+  fileUrl     String?  @map("file_url")
+  fileName    String?  @map("file_name")
+  bucketName  String?  @map("bucket_name")
+  storagePath String?  @map("storage_path")
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 

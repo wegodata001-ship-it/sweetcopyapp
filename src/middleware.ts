@@ -1,7 +1,8 @@
 ﻿// @ts-nocheck
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { verifySessionToken, COOKIE_NAME } from "@/lib/auth/jwt";
+import { verifySessionToken, COOKIE_NAME, applySessionHeaders } from "@/lib/auth/jwt";
+import { logAuthEvent } from "@/lib/auth/auth-log";
 import { employeeWorkflowApiAllowed } from "@/lib/auth/employee-api-access";
 import { API_ACCESS_RULES, PAGE_ACCESS_RULES, matchRule } from "@/lib/auth/permissions";
 import { WEGO_LOCALE_COOKIE, normalizeLocale } from "@/lib/i18n/constants";
@@ -60,6 +61,10 @@ export async function middleware(request: NextRequest) {
   const token = request.cookies.get(COOKIE_NAME)?.value;
   const session = token ? await verifySessionToken(token) : null;
 
+  if (token && !session) {
+    logAuthEvent("JWT_VERIFY_FAIL", { path: pathname });
+  }
+
   if (!session) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json(
@@ -73,11 +78,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  const forward = () => {
+    const requestHeaders = new Headers(request.headers);
+    applySessionHeaders(requestHeaders, session);
+    return NextResponse.next({ request: { headers: requestHeaders } });
+  };
+
   if (session.mustChangePassword === true) {
     if (pathname.startsWith("/api/")) {
       const apiPath = pathname.replace(/\/+$/, "") || "/";
       if (request.method === "OPTIONS") {
-        return NextResponse.next();
+        return forward();
       }
       const allowed =
         (apiPath === "/api/auth/change-password" && request.method === "POST") ||
@@ -85,7 +96,7 @@ export async function middleware(request: NextRequest) {
         (apiPath === "/api/auth/logout" && request.method === "POST") ||
         (apiPath === "/api/auth/me" && request.method === "GET");
       if (allowed) {
-        return NextResponse.next();
+        return forward();
       }
       return NextResponse.json(
         {
@@ -98,7 +109,7 @@ export async function middleware(request: NextRequest) {
     }
 
     if (pathname === "/change-password" || pathname.startsWith("/change-password/")) {
-      return NextResponse.next();
+      return forward();
     }
 
     const changeUrl = new URL("/change-password", request.url);
@@ -154,7 +165,7 @@ export async function middleware(request: NextRequest) {
     const apiPath = pathname.replace(/\/+$/, "") || "/";
 
     if (request.method === "OPTIONS") {
-      return NextResponse.next();
+      return forward();
     }
 
     if (!isHlwaitApiRoute(apiPath)) {
@@ -168,11 +179,11 @@ export async function middleware(request: NextRequest) {
       (apiPath === "/api/auth/change-password" || apiPath === "/api/me/password") &&
       request.method === "POST"
     ) {
-      return NextResponse.next();
+      return forward();
     }
 
     if (apiPath === "/api/work/my-tasks" && request.method === "GET" && canAccessMyTasksPage) {
-      return NextResponse.next();
+      return forward();
     }
     /** התחלה/סיום משימות — בעלות לפי assignedToUserId בשרת */
     if (
@@ -181,7 +192,7 @@ export async function middleware(request: NextRequest) {
       apiPath.startsWith("/api/work/tasks/") &&
       (apiPath.endsWith("/start") || apiPath.endsWith("/complete"))
     ) {
-      return NextResponse.next();
+      return forward();
     }
 
     if (isPureEmployeeRole(role)) {
@@ -190,7 +201,7 @@ export async function middleware(request: NextRequest) {
       }
       if (apiPath.startsWith("/api/workflows/")) {
         if (employeeWorkflowApiAllowed(apiPath, request.method)) {
-          return NextResponse.next();
+          return forward();
         }
         return NextResponse.json({ ok: false, error: t("toasts.noPermission") }, { status: 403 });
       }
@@ -208,7 +219,7 @@ export async function middleware(request: NextRequest) {
         apiUrl.searchParams.get("forWorkOrder") === "1") &&
       (isAdminRole(role) || permSet.has("tasks"))
     ) {
-      return NextResponse.next();
+      return forward();
     }
     if (
       apiPath.startsWith("/api/payments") &&
@@ -216,60 +227,60 @@ export async function middleware(request: NextRequest) {
       !permSet.has("financial_registration") &&
       permSet.has("ledger")
     ) {
-      return NextResponse.next();
+      return forward();
     }
     if (apiPath.startsWith("/api/reports")) {
-      if (isAdminRole(role)) return NextResponse.next();
-      if (permSet.has("financial_registration") || permSet.has("cash_flow")) return NextResponse.next();
+      if (isAdminRole(role)) return forward();
+      if (permSet.has("financial_registration") || permSet.has("cash_flow")) return forward();
       return NextResponse.json({ ok: false, error: t("toasts.noPermission") }, { status: 403 });
     }
     if (apiPath === "/api/me/attendance" || apiPath.startsWith("/api/me/attendance/")) {
       if (!canAccessMyTasksPage) {
         return NextResponse.json({ ok: false, error: t("toasts.noPermission") }, { status: 403 });
       }
-      return NextResponse.next();
+      return forward();
     }
     if (apiPath === "/api/me/work-session" || apiPath.startsWith("/api/me/work-session/")) {
-      return NextResponse.next();
+      return forward();
     }
     if (apiPath === "/api/me/dashboard") {
-      return NextResponse.next();
+      return forward();
     }
     if (apiPath === "/api/me/alerts" || apiPath.startsWith("/api/me/alerts/")) {
-      return NextResponse.next();
+      return forward();
     }
     if (apiPath === "/api/me/notifications" || apiPath.startsWith("/api/me/notifications/")) {
-      return NextResponse.next();
+      return forward();
     }
     if (apiPath === "/api/me/notification-preferences") {
-      return NextResponse.next();
+      return forward();
     }
     if (apiPath === "/api/notifications" || apiPath.startsWith("/api/notifications/")) {
-      return NextResponse.next();
+      return forward();
     }
     if (apiPath === "/api/me/language" && request.method === "PATCH") {
-      return NextResponse.next();
+      return forward();
     }
     if (apiPath === "/api/work-status/heartbeat" && request.method === "POST") {
       if (!canAccessMyTasksPage) {
         return NextResponse.json({ ok: false, error: t("toasts.noPermission") }, { status: 403 });
       }
-      return NextResponse.next();
+      return forward();
     }
     if (apiPath === "/api/work-status/me") {
       if (!canAccessMyTasksPage) {
         return NextResponse.json({ ok: false, error: t("toasts.noPermission") }, { status: 403 });
       }
-      return NextResponse.next();
+      return forward();
     }
     if (apiPath === "/api/work-status/board") {
-      if (role === "SUPER_ADMIN" || permSet.has("tasks")) {
-        return NextResponse.next();
+      if (isAdminRole(role) || permSet.has("tasks")) {
+        return forward();
       }
       return NextResponse.json({ ok: false, error: t("toasts.noPermission") }, { status: 403 });
     }
     if (apiPath === "/api/future-orders" || apiPath.startsWith("/api/future-orders/")) {
-      return NextResponse.next();
+      return forward();
     }
     const rule = matchRule(apiPath, API_ACCESS_RULES);
     if (rule === null && !isAdminRole(role)) {
@@ -281,21 +292,21 @@ export async function middleware(request: NextRequest) {
     if (rule && rule !== "SUPER_ADMIN_ONLY" && !isAdminRole(role) && !permSet.has(rule)) {
       return NextResponse.json({ ok: false, error: t("toasts.noPermission") }, { status: 403 });
     }
-    return NextResponse.next();
+    return forward();
   }
 
   if (pathname === "/employee/tasks" || pathname.startsWith("/employee/tasks/")) {
     if (!canAccessMyTasksPage) {
       return NextResponse.redirect(new URL("/", request.url));
     }
-    return NextResponse.next();
+    return forward();
   }
 
   if (pathname === "/employee/work-status" || pathname.startsWith("/employee/work-status/")) {
     if (!canAccessMyTasksPage) {
       return NextResponse.redirect(new URL("/", request.url));
     }
-    return NextResponse.next();
+    return forward();
   }
 
   if (pathname === "/ops/attendance" || pathname.startsWith("/ops/attendance/")) {
@@ -312,18 +323,18 @@ export async function middleware(request: NextRequest) {
     if (!canAccessMyTasksPage) {
       return NextResponse.redirect(new URL("/", request.url));
     }
-    return NextResponse.next();
+    return forward();
   }
 
   if (isWeddingOrdersPath) {
     if (isAdminRole(role)) {
-      return NextResponse.next();
+      return forward();
     }
     return NextResponse.redirect(new URL("/", request.url));
   }
 
   if (isDailyOrdersPath) {
-    return NextResponse.next();
+    return forward();
   }
 
   const pageRule = matchRule(pathname, PAGE_ACCESS_RULES);
@@ -336,7 +347,7 @@ export async function middleware(request: NextRequest) {
     !permSet.has("financial_registration") &&
     permSet.has("ledger")
   ) {
-    return NextResponse.next();
+    return forward();
   }
   if (
     pageRule &&
@@ -348,7 +359,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  return NextResponse.next();
+  return forward();
 }
 
 export const config = {

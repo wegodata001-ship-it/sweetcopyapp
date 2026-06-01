@@ -5,7 +5,7 @@ import { verifySessionToken, COOKIE_NAME } from "@/lib/auth/jwt";
 import { appendRefreshedSessionCookie } from "@/lib/auth/reissue-session";
 import { getPermissionStringsForUser } from "@/lib/auth/user-permissions";
 import { toApiUser } from "@/lib/auth/user-dto";
-import { parseSessionRole } from "@/lib/auth/session-role";
+import { mapRoleForClient, parseSessionRole } from "@/lib/auth/session-role";
 
 const FAST_HEADERS = { "Cache-Control": "private, max-age=15" };
 
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
   const sync = req.nextUrl.searchParams.get("sync") === "1";
 
   const row = await prisma.hLWaitUser.findUnique({
-    where: { id: session.sub },
+    where: { id: session.userId },
     select: { id: true, name: true, email: true, role: true, isActive: true },
   });
 
@@ -39,11 +39,12 @@ export async function GET(req: NextRequest) {
     const permissions = await getPermissionStringsForUser(user.id, role);
     const res = NextResponse.json({
       ok: true,
-      user: { ...user, role, permissions },
+      user: { ...user, role: mapRoleForClient(role), permissions },
     });
     await appendRefreshedSessionCookie(res, {
       id: user.id,
       email: user.email,
+      name: user.fullName,
       role,
       mustChangePassword: false,
       permissions,
@@ -56,7 +57,7 @@ export async function GET(req: NextRequest) {
       ok: true,
       user: {
         ...user,
-        role,
+        role: mapRoleForClient(role),
         permissions: session.permissions,
       },
     },

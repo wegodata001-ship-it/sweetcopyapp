@@ -15,13 +15,14 @@ export type ReportTypeValue = (typeof REPORT_TYPES)[keyof typeof REPORT_TYPES];
  * (אופציונלי: NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET אם צריך תאימות לקוד ישן).
  */
 export function reportsBucket(): string {
+  console.log("BUCKET:", process.env.SUPABASE_STORAGE_BUCKET);
   const b =
     process.env.SUPABASE_STORAGE_BUCKET?.trim() ||
     process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET?.trim() ||
     process.env.NEXT_PUBLIC_SUPABASE_REPORTS_BUCKET?.trim();
   if (!b) {
     throw new Error(
-      "חסר SUPABASE_STORAGE_BUCKET ב-.env — צרו ב-Supabase Storage באקט public (למשל wego-reports) והגדירו את השם",
+      "חסר SUPABASE_STORAGE_BUCKET ב-.env — צרו ב-Supabase Storage באקט public (למשל hlwait-documents) והגדירו את השם",
     );
   }
   return b;
