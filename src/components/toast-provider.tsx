@@ -144,8 +144,8 @@ function ToastViewport({
       } md:bottom-6 ${dir === "rtl" ? "md:right-6" : "md:left-6"}`}
     >
       {toasts.map((toast) => {
-        const tone = TONE_STYLES[toast.tone ?? "info"];
-        const Icon = tone.icon;
+        const tone = TONE_STYLES[toast.tone ?? "info"] ?? TONE_STYLES.info;
+        const Icon = tone?.icon ?? Info;
         return (
           <div
             key={toast.id}

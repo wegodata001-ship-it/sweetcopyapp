@@ -1,6 +1,11 @@
 ﻿import { prisma } from "@/lib/prisma";
-import type { DashboardHeroMetrics } from "@/lib/dashboard/financial-engine";
+import type {
+  DailyPnlPoint,
+  DashboardHeroMetrics,
+  ExpenseCategoryMetrics,
+} from "@/lib/dashboard/financial-engine";
 import type { RangeKeyed } from "@/lib/dashboard/time-range";
+import { EXPENSE_TYPE_VALUES, type ExpenseType } from "@/lib/finance/expense-types";
 
 export type DashboardAlert = {
   id: string;
@@ -30,12 +35,12 @@ export type DashboardHeroSlice = {
 
 export type DashboardSummary = DashboardHeroSlice & {
   dbUnavailable?: boolean;
-  expensesByType: { label: string; amount: number; color?: string }[];
+  expensesByType: ExpenseCategoryMetrics[];
   zPos: ZPosSlice;
   zPosByRange: RangeKeyed<ZPosSlice>;
   weddings: WeddingSectionStats;
   weddingsByRange: RangeKeyed<WeddingSectionStats>;
-  dailyChart: { date: string; income: number; expense: number }[];
+  dailyChart: DailyPnlPoint[];
   tasksChart: { onTime: number; late: number; early: number };
   supplierPayments: {
     paidCount: number;
@@ -61,6 +66,103 @@ const emptyWedding: WeddingSectionStats = { weddings: 0, orders: 0, documented: 
 
 function rangeKeyed<T>(value: T): RangeKeyed<T> {
   return { today: value, week: value, month: value };
+}
+
+function pctChange(current: number, previous: number): number | null {
+  if (previous < 1) return current > 0 ? 100 : null;
+  return Math.round(((current - previous) / previous) * 100);
+}
+
+function classifyHlwaitExpense(row: {
+  supplierId: string | null;
+  employeeId: string | null;
+}): ExpenseType {
+  if (row.employeeId) return "WORKER_PAYMENTS";
+  if (row.supplierId) return "SUPPLIER_PAYMENTS";
+  return "DAILY_PAYMENTS";
+}
+
+function inDateRange(d: Date, from: Date, to: Date) {
+  const t = d.getTime();
+  return t >= from.getTime() && t <= to.getTime();
+}
+
+function buildExpensesByType(
+  rows: {
+    amount: { toString(): string };
+    expenseDate: Date;
+    supplierId: string | null;
+    employeeId: string | null;
+  }[],
+): ExpenseCategoryMetrics[] {
+  const today0 = startOfToday();
+  const todayEnd = new Date(today0);
+  todayEnd.setUTCHours(23, 59, 59, 999);
+
+  const weekStart = new Date(today0);
+  weekStart.setUTCDate(weekStart.getUTCDate() - weekStart.getUTCDay());
+  const weekEnd = new Date(weekStart);
+  weekEnd.setUTCDate(weekEnd.getUTCDate() + 6);
+  weekEnd.setUTCHours(23, 59, 59, 999);
+
+  const prevWeekEnd = new Date(weekStart);
+  prevWeekEnd.setUTCDate(prevWeekEnd.getUTCDate() - 1);
+  prevWeekEnd.setUTCHours(23, 59, 59, 999);
+  const prevWeekStart = new Date(prevWeekEnd);
+  prevWeekStart.setUTCDate(prevWeekStart.getUTCDate() - 6);
+  prevWeekStart.setUTCHours(0, 0, 0, 0);
+
+  const monthStart = new Date(Date.UTC(today0.getUTCFullYear(), today0.getUTCMonth(), 1));
+  const monthEnd = new Date(Date.UTC(today0.getUTCFullYear(), today0.getUTCMonth() + 1, 0, 23, 59, 59, 999));
+
+  const today = new Map<ExpenseType, number>();
+  const week = new Map<ExpenseType, number>();
+  const month = new Map<ExpenseType, number>();
+  const prevWeek = new Map<ExpenseType, number>();
+  const daily = new Map<string, Map<ExpenseType, number>>();
+
+  for (const type of EXPENSE_TYPE_VALUES) {
+    today.set(type, 0);
+    week.set(type, 0);
+    month.set(type, 0);
+    prevWeek.set(type, 0);
+  }
+
+  for (const row of rows) {
+    const type = classifyHlwaitExpense(row);
+    const amt = Number(row.amount);
+    if (!Number.isFinite(amt) || amt <= 0) continue;
+    const ed = new Date(row.expenseDate);
+    if (inDateRange(ed, today0, todayEnd)) today.set(type, (today.get(type) ?? 0) + amt);
+    if (inDateRange(ed, weekStart, weekEnd)) week.set(type, (week.get(type) ?? 0) + amt);
+    if (inDateRange(ed, prevWeekStart, prevWeekEnd)) prevWeek.set(type, (prevWeek.get(type) ?? 0) + amt);
+    if (inDateRange(ed, monthStart, monthEnd)) month.set(type, (month.get(type) ?? 0) + amt);
+    const sk = ed.toISOString().slice(0, 10);
+    if (!daily.has(sk)) daily.set(sk, new Map());
+    const bucket = daily.get(sk)!;
+    bucket.set(type, (bucket.get(type) ?? 0) + amt);
+  }
+
+  const sparkDays: string[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today0);
+    d.setUTCDate(d.getUTCDate() - i);
+    sparkDays.push(d.toISOString().slice(0, 10));
+  }
+
+  return EXPENSE_TYPE_VALUES.map((type) => {
+    const weekAmt = week.get(type) ?? 0;
+    const prevWeekAmt = prevWeek.get(type) ?? 0;
+    return {
+      type,
+      today: today.get(type) ?? 0,
+      week: weekAmt,
+      month: month.get(type) ?? 0,
+      prevWeek: prevWeekAmt,
+      changePctWeek: pctChange(weekAmt, prevWeekAmt),
+      sparkline: sparkDays.map((sk) => daily.get(sk)?.get(type) ?? 0),
+    };
+  });
 }
 
 export async function computeDashboardHeroSlice(_locale: string): Promise<DashboardHeroSlice> {
@@ -98,8 +200,11 @@ export async function computeDashboardHeroSlice(_locale: string): Promise<Dashbo
 
 export async function computeDashboardSummary(_locale: string): Promise<DashboardSummary> {
   const hero = await computeDashboardHeroSlice(_locale);
-  const [expenses, paymentsTotal, ordersOpen, suppliers] = await Promise.all([
-    prisma.hLWaitExpense.findMany({ take: 6, orderBy: { expenseDate: "desc" } }),
+  const [expenseRows, paymentsTotal, ordersOpen, suppliers] = await Promise.all([
+    prisma.hLWaitExpense.findMany({
+      select: { amount: true, expenseDate: true, supplierId: true, employeeId: true },
+      orderBy: { expenseDate: "desc" },
+    }),
     prisma.hLWaitPayment.aggregate({ _sum: { amount: true } }),
     prisma.hLWaitOrder.count({ where: { status: "open" } }),
     prisma.hLWaitSupplier.findMany({ take: 5, orderBy: { name: "asc" } }),
@@ -107,10 +212,7 @@ export async function computeDashboardSummary(_locale: string): Promise<Dashboar
 
   return {
     ...hero,
-    expensesByType: expenses.map((e) => ({
-      label: e.description || "הוצאה",
-      amount: Number(e.amount),
-    })),
+    expensesByType: buildExpensesByType(expenseRows),
     zPos: emptyZ,
     zPosByRange: rangeKeyed(emptyZ),
     weddings: { ...emptyWedding, orders: ordersOpen },

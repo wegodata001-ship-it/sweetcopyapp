@@ -73,8 +73,8 @@ export function WarehouseAreaCard({
   onStats,
   onAddProduct,
 }: Props) {
-  const st = statusStyles[status];
-  const StatusIcon = st.icon;
+  const st = statusStyles[status] ?? statusStyles.pending;
+  const StatusIcon = st?.icon ?? Layers;
   const pct = Math.min(100, Math.max(0, progressPct));
 
   return (

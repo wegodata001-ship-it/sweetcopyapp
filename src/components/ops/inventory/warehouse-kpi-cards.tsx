@@ -15,7 +15,15 @@ export function WarehouseKpiCards({ items }: { items: WarehouseKpi[] }) {
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       {items.map((item, i) => {
-        const Icon = item.icon;
+        if (!item) {
+          console.warn("[WarehouseKpiCards] undefined item at index", i);
+          return null;
+        }
+        const Icon = item?.icon;
+        if (!Icon) {
+          console.warn("[WarehouseKpiCards] missing item.icon", item);
+          return null;
+        }
         return (
           <div
             key={item.key}

@@ -75,7 +75,18 @@ export function ExpenseCategoryCards({ cards }: { cards: ExpenseCategoryMetrics[
         className={`grid flex-1 grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5 lg:grid-rows-1 ${fade.fade}`}
       >
         {displayCards.map((card) => {
+          if (process.env.NODE_ENV === "development") {
+            console.log("[ExpenseCategoryCards] card", card);
+          }
+          if (!card?.type) {
+            console.warn("[ExpenseCategoryCards] missing card.type", card);
+            return null;
+          }
           const style = STYLES[card.type];
+          if (!style) {
+            console.warn("[ExpenseCategoryCards] unknown expense type", card.type, card);
+            return null;
+          }
           const Icon = style.icon;
           const path = smoothLinePath(card.sparkline, 64, 22, 2);
           const pct = card.changePctWeek;

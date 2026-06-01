@@ -55,7 +55,7 @@ export function ShelfCard({
   onStats,
   onAddProduct,
 }: Props) {
-  const st = statusStyles[status];
+  const st = statusStyles[status] ?? statusStyles.pending;
   const secondaryBtn =
     "inline-flex h-9 flex-1 items-center justify-center gap-1 rounded-xl border border-slate-200/90 bg-white text-[11px] font-bold text-slate-700 shadow-sm transition hover:border-sky-200 hover:bg-sky-50/80";
 
