@@ -16,7 +16,10 @@ export function isDbConnectionError(e: unknown): boolean {
   );
 }
 
-/** פרמטרים מומלצים ל-Supabase pooler (פורט 6543) */
+/** Default PostgreSQL schema for hlwait-only Prisma models */
+export const PRISMA_DB_SCHEMA = "hlwait";
+
+/** פרמטרים מומלצים ל-Supabase pooler (פורט 6543) + schema hlwait */
 export function normalizeDatabaseUrl(raw: string): string {
   const url = raw.trim();
   if (!url) return url;
@@ -30,6 +33,10 @@ export function normalizeDatabaseUrl(raw: string): string {
     }
     if (!u.searchParams.has("connect_timeout")) {
       u.searchParams.set("connect_timeout", "15");
+    }
+    // Prisma multi-schema: default connection schema (not public)
+    if (!u.searchParams.has("schema")) {
+      u.searchParams.set("schema", PRISMA_DB_SCHEMA);
     }
     return u.toString();
   } catch {

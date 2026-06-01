@@ -24,6 +24,12 @@ function activeDatabaseUrl(): string | undefined {
 
 function buildPrismaClient(): PrismaClient {
   const url = activeDatabaseUrl();
+  if (process.env.NODE_ENV !== "production") {
+    console.log("DATABASE_URL =", process.env.DATABASE_URL);
+    if (url && url !== process.env.DATABASE_URL?.trim()) {
+      console.log("DATABASE_URL (normalized) =", url);
+    }
+  }
   return new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
     ...(url ? { datasources: { db: { url } } } : {}),

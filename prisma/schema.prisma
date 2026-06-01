@@ -1,8 +1,3 @@
-// DEMO data layer — PostgreSQL schema `hlwait` (project khwwxynldoimdrnecfan)
-// Table naming: hlwait.<hlwait_*> — collision-free multi-tenant convention
-//   future:  desigma.desigma_users / ameer.ameer_users
-// Reset:   npm run demo:hlwait:reset
-
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["multiSchema"]
@@ -15,122 +10,104 @@ datasource db {
   schemas   = ["hlwait"]
 }
 
-// ─── Users ────────────────────────────────────────────────────────────────────
-
 model HLWaitUser {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email        String   @unique
-  name         String
-  role         String   @default("employee")
-  passwordHash String   @map("password_hash")
-  isActive     Boolean  @default(true) @map("is_active")
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  tasksAssigned      HLWaitTask[]
+  id                 String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email              String          @unique
+  name               String
+  role               String          @default("employee")
+  passwordHash       String          @map("password_hash")
+  isActive           Boolean         @default(true) @map("is_active")
+  createdAt          DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   expensesAsEmployee HLWaitExpense[] @relation("ExpenseEmployee")
+  tasksAssigned      HLWaitTask[]
 
   @@map("hlwait_users")
   @@schema("hlwait")
 }
 
-// ─── Customers ────────────────────────────────────────────────────────────────
-
 model HLWaitCustomer {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id        String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name      String
   phone     String?
   email     String?
   address   String?
-  balance   Decimal  @default(0) @db.Decimal(14, 2)
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  orders   HLWaitOrder[]
-  payments HLWaitPayment[]
-  income   HLWaitIncome[]
+  balance   Decimal         @default(0) @db.Decimal(14, 2)
+  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  income    HLWaitIncome[]
+  orders    HLWaitOrder[]
+  payments  HLWaitPayment[]
 
   @@map("hlwait_customers")
   @@schema("hlwait")
 }
 
-// ─── Suppliers ────────────────────────────────────────────────────────────────
-
 model HLWaitSupplier {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id        String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name      String
   phone     String?
   email     String?
   notes     String?
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  products HLWaitProduct[]
-  payments HLWaitPayment[]
-  expenses HLWaitExpense[]
+  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  expenses  HLWaitExpense[]
+  payments  HLWaitPayment[]
+  products  HLWaitProduct[]
 
   @@map("hlwait_suppliers")
   @@schema("hlwait")
 }
 
-// ─── Products ─────────────────────────────────────────────────────────────────
-
 model HLWaitProduct {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  supplierId   String?  @map("supplier_id") @db.Uuid
-  sku          String?  @unique
+  id           String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  supplierId   String?           @map("supplier_id") @db.Uuid
+  sku          String?           @unique
   name         String
-  salePrice    Decimal  @default(0) @map("sale_price") @db.Decimal(14, 2)
-  currentStock Decimal  @default(0) @map("current_stock") @db.Decimal(14, 3)
-  minStock     Decimal  @default(0) @map("min_stock") @db.Decimal(14, 3)
-  isActive     Boolean  @default(true) @map("is_active")
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  supplier   HLWaitSupplier?   @relation(fields: [supplierId], references: [id], onDelete: SetNull)
-  orderItems HLWaitOrderItem[]
-  inventory  HLWaitInventory[]
+  salePrice    Decimal           @default(0) @map("sale_price") @db.Decimal(14, 2)
+  currentStock Decimal           @default(0) @map("current_stock") @db.Decimal(14, 3)
+  minStock     Decimal           @default(0) @map("min_stock") @db.Decimal(14, 3)
+  isActive     Boolean           @default(true) @map("is_active")
+  createdAt    DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  inventory    HLWaitInventory[]
+  orderItems   HLWaitOrderItem[]
+  supplier     HLWaitSupplier?   @relation(fields: [supplierId], references: [id])
 
   @@index([supplierId])
   @@map("hlwait_products")
   @@schema("hlwait")
 }
 
-// ─── Orders ───────────────────────────────────────────────────────────────────
-
 model HLWaitOrder {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  customerId  String?  @map("customer_id") @db.Uuid
-  orderNumber String   @unique @map("order_number")
-  status      String   @default("open")
-  total       Decimal  @default(0) @db.Decimal(14, 2)
+  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customerId  String?           @map("customer_id") @db.Uuid
+  orderNumber String            @unique @map("order_number")
+  status      String            @default("open")
+  total       Decimal           @default(0) @db.Decimal(14, 2)
   notes       String?
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  customer HLWaitCustomer?  @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  items    HLWaitOrderItem[]
-  income   HLWaitIncome[]
+  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  income      HLWaitIncome[]
+  items       HLWaitOrderItem[]
+  customer    HLWaitCustomer?   @relation(fields: [customerId], references: [id])
 
   @@index([customerId])
   @@map("hlwait_orders")
   @@schema("hlwait")
 }
 
-// ─── Order Items ──────────────────────────────────────────────────────────────
-
 model HLWaitOrderItem {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  orderId   String   @map("order_id") @db.Uuid
-  productId String   @map("product_id") @db.Uuid
-  quantity  Decimal  @db.Decimal(14, 3)
-  unitPrice Decimal  @map("unit_price") @db.Decimal(14, 2)
-  lineTotal Decimal  @map("line_total") @db.Decimal(14, 2)
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  order   HLWaitOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product HLWaitProduct @relation(fields: [productId], references: [id], onDelete: Restrict)
+  id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId   String        @map("order_id") @db.Uuid
+  productId String        @map("product_id") @db.Uuid
+  quantity  Decimal       @db.Decimal(14, 3)
+  unitPrice Decimal       @map("unit_price") @db.Decimal(14, 2)
+  lineTotal Decimal       @map("line_total") @db.Decimal(14, 2)
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  order     HLWaitOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   HLWaitProduct @relation(fields: [productId], references: [id])
 
   @@index([orderId])
   @@index([productId])
@@ -138,25 +115,22 @@ model HLWaitOrderItem {
   @@schema("hlwait")
 }
 
-// ─── Payments ─────────────────────────────────────────────────────────────────
-
 model HLWaitPayment {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  customerId    String?  @map("customer_id") @db.Uuid
-  supplierId    String?  @map("supplier_id") @db.Uuid
-  amount        Decimal  @db.Decimal(14, 2)
-  paymentMethod String   @default("cash") @map("payment_method")
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customerId    String?         @map("customer_id") @db.Uuid
+  supplierId    String?         @map("supplier_id") @db.Uuid
+  amount        Decimal         @db.Decimal(14, 2)
+  paymentMethod String          @default("cash") @map("payment_method")
   notes         String?
-  paidAt        DateTime @default(now()) @map("paid_at") @db.Timestamptz(6)
-  fileUrl       String?  @map("file_url")
-  fileName      String?  @map("file_name")
-  bucketName    String?  @map("bucket_name")
-  storagePath   String?  @map("storage_path")
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  customer HLWaitCustomer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  supplier HLWaitSupplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  paidAt        DateTime        @default(now()) @map("paid_at") @db.Timestamptz(6)
+  createdAt     DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  bucketName    String?         @map("bucket_name")
+  fileName      String?         @map("file_name")
+  fileUrl       String?         @map("file_url")
+  storagePath   String?         @map("storage_path")
+  customer      HLWaitCustomer? @relation(fields: [customerId], references: [id])
+  supplier      HLWaitSupplier? @relation(fields: [supplierId], references: [id])
 
   @@index([customerId])
   @@index([supplierId])
@@ -164,83 +138,71 @@ model HLWaitPayment {
   @@schema("hlwait")
 }
 
-// ─── Inventory ────────────────────────────────────────────────────────────────
-
 model HLWaitInventory {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  productId String   @map("product_id") @db.Uuid
-  location  String   @default("default")
-  quantity  Decimal  @default(0) @db.Decimal(14, 3)
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  product HLWaitProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId String        @map("product_id") @db.Uuid
+  location  String        @default("default")
+  quantity  Decimal       @default(0) @db.Decimal(14, 3)
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  product   HLWaitProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([productId, location])
   @@map("hlwait_inventory")
   @@schema("hlwait")
 }
 
-// ─── Tasks ────────────────────────────────────────────────────────────────────
-
 model HLWaitTask {
-  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   title          String
   description    String?
-  assignedUserId String?   @map("assigned_user_id") @db.Uuid
-  status         String    @default("pending")
-  dueDate        DateTime? @map("due_date") @db.Date
-  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  assignee HLWaitUser? @relation(fields: [assignedUserId], references: [id], onDelete: SetNull)
+  assignedUserId String?     @map("assigned_user_id") @db.Uuid
+  status         String      @default("pending")
+  dueDate        DateTime?   @map("due_date") @db.Date
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  assignee       HLWaitUser? @relation(fields: [assignedUserId], references: [id])
 
   @@index([assignedUserId])
   @@map("hlwait_tasks")
   @@schema("hlwait")
 }
 
-// ─── Expenses ─────────────────────────────────────────────────────────────────
-
 model HLWaitExpense {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  supplierId  String?  @map("supplier_id") @db.Uuid
-  employeeId  String?  @map("employee_id") @db.Uuid
-  amount      Decimal  @db.Decimal(14, 2)
-  description String   @default("")
-  expenseDate DateTime @default(now()) @map("expense_date") @db.Date
-  fileUrl     String?  @map("file_url")
-  fileName    String?  @map("file_name")
-  bucketName  String?  @map("bucket_name")
-  storagePath String?  @map("storage_path")
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  supplier HLWaitSupplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
-  employee HLWaitUser?     @relation("ExpenseEmployee", fields: [employeeId], references: [id], onDelete: SetNull)
+  id          String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  supplierId  String?         @map("supplier_id") @db.Uuid
+  employeeId  String?         @map("employee_id") @db.Uuid
+  amount      Decimal         @db.Decimal(14, 2)
+  description String          @default("")
+  expenseDate DateTime        @default(now()) @map("expense_date") @db.Date
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  bucketName  String?         @map("bucket_name")
+  fileName    String?         @map("file_name")
+  fileUrl     String?         @map("file_url")
+  storagePath String?         @map("storage_path")
+  employee    HLWaitUser?     @relation("ExpenseEmployee", fields: [employeeId], references: [id])
+  supplier    HLWaitSupplier? @relation(fields: [supplierId], references: [id])
 
   @@map("hlwait_expenses")
   @@schema("hlwait")
 }
 
-// ─── Income ───────────────────────────────────────────────────────────────────
-
 model HLWaitIncome {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  customerId  String?  @map("customer_id") @db.Uuid
-  orderId     String?  @map("order_id") @db.Uuid
-  amount      Decimal  @db.Decimal(14, 2)
-  description String   @default("")
-  incomeDate  DateTime @default(now()) @map("income_date") @db.Date
-  fileUrl     String?  @map("file_url")
-  fileName    String?  @map("file_name")
-  bucketName  String?  @map("bucket_name")
-  storagePath String?  @map("storage_path")
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  customer HLWaitCustomer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  order    HLWaitOrder?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  id          String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customerId  String?         @map("customer_id") @db.Uuid
+  orderId     String?         @map("order_id") @db.Uuid
+  amount      Decimal         @db.Decimal(14, 2)
+  description String          @default("")
+  incomeDate  DateTime        @default(now()) @map("income_date") @db.Date
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  bucketName  String?         @map("bucket_name")
+  fileName    String?         @map("file_name")
+  fileUrl     String?         @map("file_url")
+  storagePath String?         @map("storage_path")
+  customer    HLWaitCustomer? @relation(fields: [customerId], references: [id])
+  order       HLWaitOrder?    @relation(fields: [orderId], references: [id])
 
   @@map("hlwait_income")
   @@schema("hlwait")
