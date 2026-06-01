@@ -169,8 +169,12 @@ model FinancialDocument {
   @@index([supplierId])
   @@index([employeeId])
   @@index([createdAt])
+  @@index([paymentStatus])
   @@index([sentToCpa])
   @@index([sentToCpaAt])
+  @@index([customerId, createdAt])
+  @@index([supplierId, createdAt])
+  @@index([category, createdAt])
 }
 
 /// יומן העברות לרואה חשבון — מי, מתי, ופעולה
@@ -221,6 +225,8 @@ model Payment {
 
   @@index([customerId])
   @@index([documentId])
+  @@index([createdAt])
+  @@index([customerId, createdAt])
 }
 
 /// ניהול צ'קים — מעקב מלא לכל צ'ק (פירעון, הפקדה, חזרה).
@@ -305,10 +311,12 @@ model CashFlowEntry {
   zReport           FinancialDocument? @relation("CashFlowZReportFinancialDocument", fields: [zReportId], references: [id], onDelete: Cascade)
 
   @@index([entryDate])
+  @@index([createdAt])
   @@index([expenseType])
   @@index([customerId])
   @@index([paymentId])
   @@index([documentId])
+  @@index([entryDate, entryType])
   @@index([relatedDocumentId])
   @@index([zReportId])
   @@index([source])
@@ -380,6 +388,7 @@ model Product {
 
   @@index([categoryId])
   @@index([supplierId])
+  @@index([createdAt])
 }
 
 /// מיקומי מחסן/חנות — נוצרים ע״י מנהל (לא hardcoded)
@@ -664,6 +673,8 @@ model FutureOrder {
   @@index([eventDate])
   @@index([status])
   @@index([isCompleted])
+  @@index([orderCategory, eventDate])
+  @@index([orderCategory, status, eventDate])
 }
 
 /// מאגר משימות מקצועי — משימה אטומית חוזרת (ניקיון, סידור, בדיקה).

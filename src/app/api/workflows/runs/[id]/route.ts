@@ -115,6 +115,9 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       where: { id: run.id },
       include: RUN_INCLUDE,
     });
+    if (!refreshed) {
+      return NextResponse.json({ ok: false, error: "ריצה לא נמצאה" }, { status: 404 });
+    }
     return NextResponse.json({
       ok: true,
       data: serializeWorkflowRunDetail(refreshed),

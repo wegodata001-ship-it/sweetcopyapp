@@ -135,8 +135,8 @@ export async function fetchCashFlowEntries(filters?: CashFlowFetchFilters): Prom
   if (filters?.entryType === "expense" && filters.expenseType) {
     params.set("expenseType", filters.expenseType);
   }
-  const qs = params.toString();
-  const res = await fetch(`/api/cashflow${qs ? `?${qs}` : ""}`, { credentials: "same-origin" });
+  params.set("all", "1");
+  const res = await fetch(`/api/cashflow?${params}`, { credentials: "same-origin" });
   try {
     const j = (await res.json()) as { ok?: boolean; data?: CashFlowRow[] };
     if (!j.ok || !j.data) return [];
@@ -227,7 +227,10 @@ export type FinanceDocumentsResponse = {
 };
 
 export async function fetchFinanceDocuments(): Promise<FinanceDocumentRow[]> {
-  const res = await fetch("/api/documents", { credentials: "same-origin", cache: "no-store" });
+  const res = await fetch("/api/documents?pageSize=2000&page=1", {
+    credentials: "same-origin",
+    cache: "no-store",
+  });
   try {
     const j = (await res.json()) as { ok?: boolean; data?: FinanceDocumentRow[] };
     if (!j.ok || !j.data) return [];
@@ -242,8 +245,11 @@ export async function fetchFinanceDocuments(): Promise<FinanceDocumentRow[]> {
  */
 export async function fetchFinanceDocumentsWithCounts(params: {
   accountant?: "all" | "sent" | "not_sent";
+  pageSize?: number;
 }): Promise<FinanceDocumentsResponse> {
   const q = new URLSearchParams();
+  q.set("pageSize", String(params.pageSize ?? 2000));
+  q.set("page", "1");
   if (params.accountant && params.accountant !== "all") q.set("accountant", params.accountant);
   const res = await fetch(`/api/documents?${q}`, { credentials: "same-origin", cache: "no-store" });
   try {

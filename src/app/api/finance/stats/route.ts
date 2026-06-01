@@ -24,7 +24,7 @@ export async function GET() {
         },
         select: { documentId: true, amount: true },
       }),
-      prisma.cashFlowEntry.findMany(),
+      prisma.cashFlowEntry.findMany({ select: { entryType: true, amount: true } }),
       prisma.financialDocument.findMany({
         where: { depositStatus: "open" },
         select: { depositAmount: true },

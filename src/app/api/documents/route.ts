@@ -32,7 +32,32 @@ import { requireDb } from "@/lib/api-route";
 import { getSessionFromCookie } from "@/lib/auth/get-session";
 import { logActivity } from "@/lib/activity-log";
 import { parseNum } from "@/lib/format-shekel";
+import { buildPaginationMeta, parsePagination } from "@/lib/api/pagination";
 import type { Prisma } from "@prisma/client";
+
+const DOCUMENT_LIST_SELECT = {
+  id: true,
+  title: true,
+  category: true,
+  documentType: true,
+  customerId: true,
+  totalAmount: true,
+  paidAmount: true,
+  remainingAmount: true,
+  metadata: true,
+  pdfStoragePath: true,
+  sentToCpa: true,
+  docDate: true,
+  createdAt: true,
+  depositAmount: true,
+  depositType: true,
+  depositNote: true,
+  depositStatus: true,
+  sentToCpaAt: true,
+  customer: { select: { name: true } },
+  payments: { select: { amount: true } },
+  sentToCpaBy: { select: { id: true, fullName: true } },
+} as const;
 
 export const dynamic = "force-dynamic";
 
@@ -50,24 +75,30 @@ export async function GET(req: NextRequest) {
     if (accountant === "sent") where.sentToCpa = true;
     else if (accountant === "not_sent") where.sentToCpa = false;
 
-    const rows = await prismaAny.financialDocument.findMany({
-      where,
-      include: {
-        customer: { select: { name: true } },
-        payments: { select: { amount: true } },
-        sentToCpaBy: { select: { id: true, fullName: true } },
-      },
-      orderBy: { createdAt: "desc" },
+    const pagination = parsePagination(searchParams, {
+      defaultPageSize: 200,
+      maxPageSize: 2000,
     });
-    const data = rows.map((r: Parameters<typeof prismaDocToFinanceRow>[0]) => prismaDocToFinanceRow(r));
 
-    const totalCount = await prismaAny.financialDocument.count();
-    const notSentCount = await prismaAny.financialDocument.count({ where: { sentToCpa: false } });
+    const [rows, filteredTotal, totalCount, notSentCount] = await Promise.all([
+      prismaAny.financialDocument.findMany({
+        where,
+        select: DOCUMENT_LIST_SELECT,
+        orderBy: { createdAt: "desc" },
+        skip: pagination.skip,
+        take: pagination.take,
+      }),
+      prismaAny.financialDocument.count({ where }),
+      prismaAny.financialDocument.count(),
+      prismaAny.financialDocument.count({ where: { sentToCpa: false } }),
+    ]);
+    const data = rows.map((r) => prismaDocToFinanceRow(r as Parameters<typeof prismaDocToFinanceRow>[0]));
     const sentCount = totalCount - notSentCount;
 
     return NextResponse.json({
       ok: true,
       data,
+      pagination: buildPaginationMeta(filteredTotal, pagination),
       counts: { total: totalCount, sent: sentCount, notSent: notSentCount },
     });
   } catch (e) {

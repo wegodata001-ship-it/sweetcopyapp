@@ -38,10 +38,35 @@ function reportTitleHe(category: string, payloadKind: string | undefined, docume
 export async function generateFinancialDocumentPdfBytes(documentId: string): Promise<Uint8Array> {
   const doc = await prisma.financialDocument.findUnique({
     where: { id: documentId },
-    include: {
-      customer: true,
-      items: { orderBy: { id: "asc" } },
-      payments: { orderBy: { createdAt: "asc" } },
+    select: {
+      id: true,
+      title: true,
+      category: true,
+      documentType: true,
+      totalAmount: true,
+      paidAmount: true,
+      metadata: true,
+      docDate: true,
+      createdAt: true,
+      depositAmount: true,
+      depositType: true,
+      depositNote: true,
+      depositStatus: true,
+      customer: { select: { name: true, phone: true } },
+      items: {
+        orderBy: { id: "asc" },
+        select: {
+          itemName: true,
+          quantity: true,
+          unitPrice: true,
+          vatType: true,
+          total: true,
+        },
+      },
+      payments: {
+        orderBy: { createdAt: "asc" },
+        select: { amount: true, paymentMethod: true, createdAt: true },
+      },
     },
   });
   if (!doc) throw new Error("מסמך לא נמצא");

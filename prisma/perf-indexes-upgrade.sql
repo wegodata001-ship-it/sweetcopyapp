@@ -35,3 +35,18 @@ CREATE INDEX IF NOT EXISTS "EmployeeTask_completedAt_idx" ON "EmployeeTask"("com
 
 CREATE INDEX IF NOT EXISTS "FutureOrder_eventDate_idx" ON "FutureOrder"("eventDate");
 CREATE INDEX IF NOT EXISTS "FutureOrder_orderCategory_status_idx" ON "FutureOrder"("orderCategory", "status");
+CREATE INDEX IF NOT EXISTS "FutureOrder_orderCategory_eventDate_idx" ON "FutureOrder"("orderCategory", "eventDate");
+CREATE INDEX IF NOT EXISTS "FutureOrder_orderCategory_status_eventDate_idx" ON "FutureOrder"("orderCategory", "status", "eventDate");
+
+CREATE INDEX IF NOT EXISTS "FinancialDocument_paymentStatus_idx" ON "FinancialDocument"("paymentStatus");
+CREATE INDEX IF NOT EXISTS "FinancialDocument_customerId_createdAt_idx" ON "FinancialDocument"("customerId", "createdAt");
+CREATE INDEX IF NOT EXISTS "FinancialDocument_supplierId_createdAt_idx" ON "FinancialDocument"("supplierId", "createdAt");
+CREATE INDEX IF NOT EXISTS "FinancialDocument_category_createdAt_idx" ON "FinancialDocument"("category", "createdAt");
+
+CREATE INDEX IF NOT EXISTS "Payment_createdAt_idx" ON "Payment"("createdAt");
+CREATE INDEX IF NOT EXISTS "Payment_customerId_createdAt_idx" ON "Payment"("customerId", "createdAt");
+
+CREATE INDEX IF NOT EXISTS "CashFlowEntry_createdAt_idx" ON "CashFlowEntry"("createdAt");
+CREATE INDEX IF NOT EXISTS "CashFlowEntry_entryDate_entryType_idx" ON "CashFlowEntry"("entryDate", "entryType");
+
+CREATE INDEX IF NOT EXISTS "Product_createdAt_idx" ON "Product"("createdAt");

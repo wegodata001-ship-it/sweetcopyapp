@@ -25,7 +25,7 @@ export async function DELETE(
 
   try {
     const where = productsOnShelfWhere(shelf);
-    const result = await prismaAny.$transaction(async (tx: typeof prismaAny) => {
+    const result = await prismaAny.$transaction(async (tx) => {
       const unlinked = await tx.inventoryProduct.updateMany({
         where,
         data: { locationId: null, location: "" },

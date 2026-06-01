@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
 
     logAuthEvent("PASSWORD_VALID", { userId: user.id });
 
-    const role = parseSessionRole(user.role) ?? ("employee" as SessionRole);
+    const role = parseSessionRole(user.role) ?? ("EMPLOYEE" as SessionRole);
     const permissions = await getPermissionStringsForUser(user.id, role);
 
     const token = await signSessionToken({

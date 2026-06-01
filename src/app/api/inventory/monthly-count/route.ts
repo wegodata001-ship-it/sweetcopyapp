@@ -161,7 +161,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "תאריך ספירה לא תקין" }, { status: 400 });
     }
 
-    const created = await prismaAny.$transaction(async (tx: typeof prismaAny) => {
+    const created = await prismaAny.$transaction(async (tx) => {
       const out: {
         id: string;
         inventoryProductId: string;

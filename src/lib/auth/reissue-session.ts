@@ -29,7 +29,14 @@ export async function appendRefreshedSessionCookie(
     typeof user === "string"
       ? await prismaAny.user.findUnique({
           where: { id: user },
-          select: { id: true, email: true, role: true, isActive: true, mustChangePassword: true },
+          select: {
+            id: true,
+            email: true,
+            fullName: true,
+            role: true,
+            isActive: true,
+            mustChangePassword: true,
+          },
         })
       : null;
 
@@ -39,6 +46,7 @@ export async function appendRefreshedSessionCookie(
       : {
           id: user.id,
           email: user.email,
+          fullName: user.email,
           role: user.role,
           isActive: true,
           mustChangePassword: user.mustChangePassword,
@@ -52,8 +60,9 @@ export async function appendRefreshedSessionCookie(
       : await getPermissionStringsForUser(row.id, row.role as UserRole);
 
   const token = await signSessionToken({
-    sub: row.id,
+    userId: row.id,
     email: row.email,
+    name: ("fullName" in row && row.fullName) || row.email,
     role: row.role as UserRole,
     permissions,
     mustChangePassword: Boolean(row.mustChangePassword),

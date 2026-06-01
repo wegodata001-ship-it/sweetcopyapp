@@ -89,7 +89,7 @@ export async function POST(
     }
 
     let resolvedShelf = shelf;
-    const result = await prismaAny.$transaction(async (tx: typeof prismaAny) => {
+    const result = await prismaAny.$transaction(async (tx) => {
       let locationId = resolvedShelf.id;
       if (!locationId) {
         const created = await tx.inventoryLocation.create({

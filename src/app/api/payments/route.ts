@@ -8,6 +8,7 @@ import {
   replaceCashFlowForDocument,
   syncCashFlowForPayment,
 } from "@/lib/finance/document-side-effects";
+import { buildPaginationMeta, parsePagination } from "@/lib/api/pagination";
 
 type CheckDetails = {
   checkNumber?: string;
@@ -23,15 +24,39 @@ export async function GET(req: NextRequest) {
   const docId = req.nextUrl.searchParams.get("documentId");
   const customerId = req.nextUrl.searchParams.get("customerId");
   try {
-    const rows = await prisma.payment.findMany({
-      where: {
-        ...(docId ? { documentId: docId } : {}),
-        ...(customerId ? { customerId } : {}),
-      },
-      orderBy: { createdAt: "desc" },
-      include: { document: { select: { title: true } }, customer: { select: { name: true } } },
+    const pagination = parsePagination(req.nextUrl.searchParams, {
+      defaultPageSize: 100,
+      maxPageSize: 500,
     });
-    return NextResponse.json({ ok: true, data: rows });
+    const where = {
+      ...(docId ? { documentId: docId } : {}),
+      ...(customerId ? { customerId } : {}),
+    };
+    const [rows, total] = await Promise.all([
+      prisma.payment.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip: pagination.skip,
+        take: pagination.take,
+        select: {
+          id: true,
+          customerId: true,
+          documentId: true,
+          amount: true,
+          paymentMethod: true,
+          notes: true,
+          createdAt: true,
+          document: { select: { title: true } },
+          customer: { select: { name: true } },
+        },
+      }),
+      prisma.payment.count({ where }),
+    ]);
+    return NextResponse.json({
+      ok: true,
+      data: rows,
+      pagination: buildPaginationMeta(total, pagination),
+    });
   } catch (e) {
     return NextResponse.json(
       { ok: false, error: e instanceof Error ? e.message : "שגיאה" },

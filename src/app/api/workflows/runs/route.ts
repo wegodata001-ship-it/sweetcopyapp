@@ -95,7 +95,7 @@ export async function GET(req: NextRequest) {
     });
 
     if (!managerView) {
-      rows = filterWorkflowRunsForUser(rows as { assigneeId: string }[], uid);
+      rows = filterWorkflowRunsForUser(rows, uid);
     }
 
     type Row = Parameters<typeof serializeWorkflowRunSummary>[0];

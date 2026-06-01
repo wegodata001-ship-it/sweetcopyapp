@@ -4,6 +4,7 @@ import { requireDb } from "@/lib/api-route";
 import { getSessionFromCookie } from "@/lib/auth/get-session";
 import { serializeCheck } from "@/lib/checks/serialize";
 import { isCheckStatus } from "@/lib/checks/helpers";
+import { buildPaginationMeta, parsePagination } from "@/lib/api/pagination";
 
 type CheckRow = Parameters<typeof serializeCheck>[0];
 
@@ -73,13 +74,26 @@ export async function GET(req: NextRequest) {
       ];
     }
 
-    const rows = (await prismaAny.checkPayment.findMany({
-      where,
-      include: CHECK_INCLUDE,
-      orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
-    })) as CheckRow[];
+    const pagination = parsePagination(searchParams, {
+      defaultPageSize: 150,
+      maxPageSize: 500,
+    });
+    const [rows, total] = await Promise.all([
+      prismaAny.checkPayment.findMany({
+        where,
+        include: CHECK_INCLUDE,
+        orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
+        skip: pagination.skip,
+        take: pagination.take,
+      }),
+      prismaAny.checkPayment.count({ where }),
+    ]);
 
-    return NextResponse.json({ ok: true, data: rows.map(serializeCheck) });
+    return NextResponse.json({
+      ok: true,
+      data: (rows as CheckRow[]).map(serializeCheck),
+      pagination: buildPaginationMeta(total, pagination),
+    });
   } catch (e) {
     return NextResponse.json(
       { ok: false, error: e instanceof Error ? e.message : "שגיאה" },

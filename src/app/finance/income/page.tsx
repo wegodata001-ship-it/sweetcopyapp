@@ -14,7 +14,10 @@ export default function IncomeDocumentPage() {
     setLoading(true);
     setDocs([]);
     try {
-      const res = await fetch("/api/documents", { credentials: "same-origin", cache: "no-store" });
+      const res = await fetch("/api/documents?pageSize=2000&page=1", {
+        credentials: "same-origin",
+        cache: "no-store",
+      });
       const j = (await res.json()) as { data?: FinanceDocumentRow[] };
       const list = j.data ?? [];
       setDocs(list.filter((r) => r.category === "הכנסה"));

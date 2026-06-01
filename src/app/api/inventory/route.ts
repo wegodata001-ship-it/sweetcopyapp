@@ -1,24 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireDb } from "@/lib/api-route";
+import { buildPaginationMeta, parsePagination } from "@/lib/api/pagination";
 
 /** רשימת מוצרים עם מלאי (תאימות + טעינה מהירה) */
-export async function GET() {
+export async function GET(req: NextRequest) {
   const block = await requireDb();
   if (block) return block;
   try {
-    const rows = await prisma.product.findMany({
-      orderBy: { name: "asc" },
-      select: {
-        id: true,
-        name: true,
-        currentStock: true,
-        minStock: true,
-        category: { select: { id: true, name: true } },
-        supplier: { select: { id: true, name: true } },
-      },
+    const pagination = parsePagination(req.nextUrl.searchParams, {
+      defaultPageSize: 200,
+      maxPageSize: 1000,
     });
-    return NextResponse.json({ ok: true, data: rows });
+    const [rows, total] = await Promise.all([
+      prisma.product.findMany({
+        orderBy: { name: "asc" },
+        select: {
+          id: true,
+          name: true,
+          currentStock: true,
+          minStock: true,
+          category: { select: { id: true, name: true } },
+          supplier: { select: { id: true, name: true } },
+        },
+        skip: pagination.skip,
+        take: pagination.take,
+      }),
+      prisma.product.count(),
+    ]);
+    return NextResponse.json({
+      ok: true,
+      data: rows,
+      pagination: buildPaginationMeta(total, pagination),
+    });
   } catch (e) {
     return NextResponse.json(
       { ok: false, error: e instanceof Error ? e.message : "שגיאה" },

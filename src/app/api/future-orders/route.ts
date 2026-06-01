@@ -7,6 +7,7 @@ import {
   canManageOrderCategory,
   canViewWeddingOrders,
 } from "@/lib/future-orders/access";
+import { buildPaginationMeta, parsePagination } from "@/lib/api/pagination";
 import {
   backfillOrderCategoriesOnce,
   computeRemainingAmount,
@@ -90,11 +91,21 @@ export async function GET(req: NextRequest) {
 
     await backfillOrderCategoriesOnce(prisma);
 
-    const rows = await prisma.futureOrder.findMany({
-      where,
-      orderBy: [{ eventDate: "asc" }, { orderNumber: "desc" }],
+    const pagination = parsePagination(sp, { defaultPageSize: 150, maxPageSize: 500 });
+    const [rows, total] = await Promise.all([
+      prisma.futureOrder.findMany({
+        where,
+        orderBy: [{ eventDate: "asc" }, { orderNumber: "desc" }],
+        skip: pagination.skip,
+        take: pagination.take,
+      }),
+      prisma.futureOrder.count({ where }),
+    ]);
+    return NextResponse.json({
+      ok: true,
+      data: rows,
+      pagination: buildPaginationMeta(total, pagination),
     });
-    return NextResponse.json({ ok: true, data: rows });
   } catch (e) {
     return NextResponse.json(
       { ok: false, error: e instanceof Error ? e.message : "שגיאה" },

@@ -1,0 +1,20 @@
+/** שדות מינימליים לרשימת תזרים + מיפוי ל־CashFlowRow */
+export const CASHFLOW_ENTRY_LIST_SELECT = {
+  id: true,
+  entryDate: true,
+  description: true,
+  entryType: true,
+  paymentMethod: true,
+  paymentId: true,
+  documentId: true,
+  relatedDocumentId: true,
+  customerId: true,
+  customerName: true,
+  notes: true,
+  source: true,
+  zReportId: true,
+  amount: true,
+  isDirect: true,
+  expenseType: true,
+  createdAt: true,
+} as const;

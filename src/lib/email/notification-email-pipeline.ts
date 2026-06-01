@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { prisma, prismaAny } from "@/lib/prisma";
 import { isDeliverableEmail } from "@/lib/email/config";
 import { resolveEmailImportance } from "@/lib/email/importance";
@@ -25,7 +26,7 @@ async function patchNotificationEmailState(
   try {
     await prismaAny.notification.update({
       where: { id: notificationId },
-      data: patch,
+      data: patch as Prisma.NotificationUpdateInput,
     });
   } catch {
     /* עמודות עדיין לא במיגרציה */

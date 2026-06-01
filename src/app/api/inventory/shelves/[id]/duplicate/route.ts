@@ -38,7 +38,7 @@ export async function POST(
     const newName = await uniqueShelfCopyName(src.name);
     const where = productsOnShelfWhere(src);
 
-    const data = await prismaAny.$transaction(async (tx: typeof prismaAny) => {
+    const data = await prismaAny.$transaction(async (tx) => {
       const srcLoc =
         src.id != null
           ? await tx.inventoryLocation.findUnique({
