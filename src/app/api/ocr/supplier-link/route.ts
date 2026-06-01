@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { requireDb } from "@/lib/api-route";
 import { appendSupplierAlias } from "@/lib/ocr/supplier-aliases";
 import { prisma } from "@/lib/prisma";
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     if (!supplierId || !ocrName) {
       return NextResponse.json({ ok: false, error: "supplierId and ocrName required" }, { status: 400 });
     }
-    const existing = await prisma.supplier.findUnique({
+    const existing = await prisma.hLWaitSupplier.findUnique({
       where: { id: supplierId },
       select: { id: true, name: true, notes: true },
     });
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "supplier not found" }, { status: 404 });
     }
     const notes = appendSupplierAlias(existing.notes, ocrName);
-    await prisma.supplier.update({
+    await prisma.hLWaitSupplier.update({
       where: { id: supplierId },
       data: { notes },
     });

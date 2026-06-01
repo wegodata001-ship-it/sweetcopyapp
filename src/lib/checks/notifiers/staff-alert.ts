@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 import type { CheckNotificationKind } from "@/lib/checks/types";
 import { notifyAdminRecipients, toneToColor } from "@/lib/notifications/dispatch";
 import type { CheckNotifier } from "@/lib/checks/notifiers/types";

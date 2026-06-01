@@ -46,9 +46,10 @@ async function main() {
   console.log("   — or run SQL files in supabase/migrations/ via SQL Editor\n");
 
   console.log("=== Done ===");
-  console.log("Login:");
-  console.log("  admin    / Admin123!");
-  console.log("  employee / Employee123!");
+  console.log("Login (identifier = fullName, nationalId, or email):");
+  console.log("  superadmin — 100000018 or superadmin / Admin123!  (SUPER_ADMIN)");
+  console.log("  admin      — admin / Admin123!                    (ADMIN)");
+  console.log("  employee   — employee / Employee123!              (EMPLOYEE)");
   console.log("\nExpose schema in Supabase → Settings → API → Exposed schemas:", schema);
   console.log("Start app: npm run dev");
 }

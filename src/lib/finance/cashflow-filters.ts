@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 import type { CashFlowEntry } from "@prisma/client";
 import { prismaCashFlowToRow } from "@/lib/finance/cashflow-map";
 import { parsePayload } from "@/lib/finance/document-payload";

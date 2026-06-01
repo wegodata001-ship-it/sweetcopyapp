@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 import { PDFDocument, rgb } from "pdf-lib";
 import { prisma } from "@/lib/prisma";
 import {

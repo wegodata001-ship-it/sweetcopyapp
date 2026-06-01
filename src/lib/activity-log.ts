@@ -1,11 +1,4 @@
-import { prisma } from "@/lib/prisma";
-
-export async function logActivity(userId: string, action: string): Promise<void> {
-  try {
-    await prisma.activityLog.create({
-      data: { userId, action },
-    });
-  } catch {
-    // לא לשבור זרימה עיקרית
-  }
+/** hlwait schema has no activity_log — no-op */
+export async function logActivity(_userId: string, _action: string): Promise<void> {
+  return;
 }

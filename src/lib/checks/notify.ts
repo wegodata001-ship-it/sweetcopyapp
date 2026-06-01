@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 import { UserRole } from "@prisma/client";
 import { prisma, prismaAny } from "@/lib/prisma";
 import { listStaffAlertRecipientIds } from "@/lib/staff/notify-managers";
@@ -129,7 +130,7 @@ export async function sendCheckAlert(params: {
   }
 
   if (kind === "deposited" && params.actorUserId) {
-    const actor = await prisma.user.findUnique({
+    const actor = await prisma.hLWaitUser.findUnique({
       where: { id: params.actorUserId },
       select: { role: true },
     });

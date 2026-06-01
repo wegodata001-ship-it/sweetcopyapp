@@ -1,34 +1,32 @@
-# DEMO database — Prisma
+# DEMO database — schema `hlwait` only
 
-## אל תריצו `prisma migrate dev` על DEMO
-
-הפקודה `migrate dev` נכשלת כשיש נתונים ישנים ב-`public` (עמודות חובה חדשות, email ריק, וכו').
-
-## הפקודה הנכונה ל-DEMO
+## Reset DEMO data layer (Supabase `khwwxynldoimdrnecfan` only)
 
 ```bash
-npm run demo:setup
+npm run demo:hlwait:reset
 ```
 
-זה מריץ:
+This runs:
 
-1. `prisma db push --force-reset` — מסנכרן schema ומאפס טבלאות (DB דמו בלבד)
-2. `prisma db seed` — משתמשי `admin` / `employee` + מלאי לדוגמה
-3. bootstrap ל-schema `demo`
+1. Safety check — refuses production / wrong project refs
+2. `prisma db push --accept-data-loss` — syncs **hlwait** tables only
+3. `prisma db seed` — admin, employee, demo customer & products
 
-## דרישות
+## Seed logins
 
-- **פרויקט Supabase DEMO חדש וריק** (לא אותו DB של ייצור)
-- `.env.local` מ-`.env.demo.example`
-- `APP_MODE=demo` ו-`DEMO_ONLY=true`
+| Role     | Email               | Password     |
+|----------|---------------------|--------------|
+| admin    | admin@sweet.demo    | Admin123!    |
+| employee | employee@sweet.demo | Employee123! |
 
-## אם רואים את השגיאה מהצילום
+## Do not use on production
 
-| שגיאה | סיבה |
-|--------|------|
-| `Customer.name` required, 29 rows | DB ישן עם נתונים אמיתיים |
-| `Payment.amount` required | אותו דבר |
-| `User.email` NULL | משתמשים ללא email |
-| `UserPermission.permission` | שורות ישנות |
+- No `prisma migrate dev` for this repo
+- No `db push --force-reset` on production projects
+- Set `DEMO_BLOCKED_SUPABASE_REFS` to your production ref in `.env.local`
 
-**פתרון:** חיבור לפרויקט DEMO נפרד + `npm run demo:setup` (לא `migrate dev`).
+## Prisma schema
+
+Single file: `prisma/schema.prisma` — all models use `@@schema("hlwait")`.
+
+Legacy `public.*` ERP tables are **not** managed by Prisma anymore; they may still exist on old DBs but are unused by this schema.

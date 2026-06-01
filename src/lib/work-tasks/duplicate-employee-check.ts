@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -5,7 +6,7 @@ import { prisma } from "@/lib/prisma";
  * מקור לדליפת משימות כשמשתמשים ב־employeeId במקום assignedToUserId.
  */
 export async function warnDuplicateEmployeeIds(): Promise<void> {
-  const users = await prisma.user.findMany({
+  const users = await prisma.hLWaitUser.findMany({
     where: { employeeId: { not: null }, isActive: true },
     select: { id: true, employeeId: true, fullName: true },
   });

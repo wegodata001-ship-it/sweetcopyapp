@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import type { UserRole } from "@prisma/client";
-import { prismaAny } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { COOKIE_NAME, signSessionToken } from "@/lib/auth/jwt";
 import { getPermissionStringsForUser } from "@/lib/auth/user-permissions";
+import type { SessionRole } from "@/lib/auth/session-role";
+import { parseSessionRole } from "@/lib/auth/session-role";
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
@@ -15,21 +16,20 @@ const COOKIE_OPTIONS = {
 export type SessionReissueUser = {
   id: string;
   email: string;
-  role: UserRole;
+  role: SessionRole;
   mustChangePassword: boolean;
   permissions?: string[];
 };
 
-/** Re-sign JWT and attach Set-Cookie — permissions אופציונליים (כבר נטענו ב-sync). */
 export async function appendRefreshedSessionCookie(
   res: NextResponse,
   user: SessionReissueUser | string,
 ): Promise<boolean> {
   const base =
     typeof user === "string"
-      ? await prismaAny.user.findUnique({
+      ? await prisma.hLWaitUser.findUnique({
           where: { id: user },
-          select: { id: true, email: true, role: true, isActive: true, mustChangePassword: true },
+          select: { id: true, email: true, role: true, isActive: true },
         })
       : null;
 
@@ -41,22 +41,23 @@ export async function appendRefreshedSessionCookie(
           email: user.email,
           role: user.role,
           isActive: true,
-          mustChangePassword: user.mustChangePassword,
         };
 
   if (!row || (typeof user === "string" && !row.isActive)) return false;
 
+  const role = parseSessionRole(row.role) ?? (typeof user !== "string" ? user.role : "employee");
+
   const permissions =
     typeof user !== "string" && user.permissions
       ? user.permissions
-      : await getPermissionStringsForUser(row.id, row.role as UserRole);
+      : await getPermissionStringsForUser(row.id, role);
 
   const token = await signSessionToken({
     sub: row.id,
     email: row.email,
-    role: row.role as UserRole,
+    role,
     permissions,
-    mustChangePassword: Boolean(row.mustChangePassword),
+    mustChangePassword: false,
   });
   res.cookies.set(COOKIE_NAME, token, COOKIE_OPTIONS);
   return true;

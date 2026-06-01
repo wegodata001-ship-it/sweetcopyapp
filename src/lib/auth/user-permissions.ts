@@ -1,14 +1,20 @@
-import type { UserRole } from "@prisma/client";
-import { prismaAny } from "@/lib/prisma";
 import { PERMISSION_KEYS } from "@/lib/auth/permissions";
+import { isAdminRole } from "@/lib/auth/session-role";
 
-export async function getPermissionStringsForUser(userId: string, role: UserRole): Promise<string[]> {
-  if (role === "SUPER_ADMIN") {
+const EMPLOYEE_PERMISSIONS = [
+  "employee_clock",
+  "tasks",
+  "inventory",
+  "financial_registration",
+  "ledger",
+] as const;
+
+export async function getPermissionStringsForUser(
+  _userId: string,
+  role: string,
+): Promise<string[]> {
+  if (isAdminRole(role)) {
     return [...PERMISSION_KEYS];
   }
-  const rows = (await prismaAny.userPermission.findMany({
-    where: { userId },
-    select: { permission: true },
-  })) as { permission: string }[];
-  return rows.map((r) => r.permission);
+  return [...EMPLOYEE_PERMISSIONS];
 }

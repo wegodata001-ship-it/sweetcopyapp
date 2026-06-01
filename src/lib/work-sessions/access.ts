@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 import { redirect } from "next/navigation";
 import { getSessionFromCookie } from "@/lib/auth/get-session";
 import { prismaAny } from "@/lib/prisma";

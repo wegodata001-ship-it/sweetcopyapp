@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+﻿import { prisma } from "@/lib/prisma";
 import type { NotificationEmailPayload } from "@/lib/email/notification-bridge";
 
 function meta(payload: NotificationEmailPayload): Record<string, unknown> {
@@ -13,7 +13,7 @@ export async function isManagerNotificationRelevant(
   const m = meta(payload);
   const type = payload.type;
 
-  const manager = await prisma.user.findUnique({
+  const manager = await prisma.hLWaitUser.findUnique({
     where: { id: managerUserId },
     select: { id: true, role: true },
   });

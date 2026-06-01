@@ -1,166 +1,165 @@
-/** קטגוריית מודול */
-export const ORDER_CATEGORY_DAILY = "DAILY_ORDER";
+import type { HLWaitOrder, HLWaitCustomer } from "@prisma/client";
+import type { SessionJwtPayload } from "@/lib/auth/jwt";
+import { isAdminRole } from "@/lib/auth/session-role";
+
+// ── Categories ─────────────────────────────────────────────────────────────────
+
+export const ORDER_CATEGORY_DAILY   = "DAILY_ORDER";
 export const ORDER_CATEGORY_WEDDING = "WEDDING_ORDER";
 
-export const ORDER_CATEGORIES = [ORDER_CATEGORY_DAILY, ORDER_CATEGORY_WEDDING] as const;
-export type OrderCategory = (typeof ORDER_CATEGORIES)[number];
+export type OrderCategory = typeof ORDER_CATEGORY_DAILY | typeof ORDER_CATEGORY_WEDDING;
+export type OrdersModule  = "daily" | "wedding";
 
-/** סוג פנימי — נשמר ב־eventType */
-export const ORDER_KIND_PRIVATE = "PRIVATE";
-export const ORDER_KIND_WEDDING = "WEDDING";
-
-export const ORDER_KINDS = [ORDER_KIND_PRIVATE, ORDER_KIND_WEDDING] as const;
-export type OrderKind = (typeof ORDER_KINDS)[number];
-
-/** תאימות לאחור */
-export const LEGACY_WEDDING_EVENT_TYPES = ["חתונה", "בר מצווה", "בת מצווה"] as const;
-
-export const FUTURE_ORDER_STATUSES = [
-  "PENDING",
-  "IN_PREPARATION",
-  "READY",
-  "COMPLETED",
-  "CANCELLED",
-] as const;
-
-export type FutureOrderStatus = (typeof FUTURE_ORDER_STATUSES)[number];
-
-export type OrdersModule = "daily" | "wedding";
-
-export function statusI18nKey(status: FutureOrderStatus, module: OrdersModule): string {
-  const base = module === "daily" ? "admin.dailyOrders" : "admin.weddingOrders";
-  const map: Record<FutureOrderStatus, string> = {
-    PENDING: `${base}.statusNew`,
-    IN_PREPARATION: `${base}.statusPreparing`,
-    READY: `${base}.statusReady`,
-    COMPLETED: `${base}.statusDelivered`,
-    CANCELLED: `${base}.statusCancelled`,
-  };
-  return map[status];
-}
-
-export const STATUS_BADGE_CLASS: Record<FutureOrderStatus, string> = {
-  PENDING: "border-amber-300/80 bg-amber-50 text-amber-900",
-  IN_PREPARATION: "border-sky-300/80 bg-sky-50 text-sky-900",
-  READY: "border-emerald-400/80 bg-emerald-50 text-emerald-900",
-  COMPLETED: "border-slate-300/80 bg-slate-100 text-slate-700",
-  CANCELLED: "border-rose-300/80 bg-rose-50 text-rose-900",
-};
-
-export const WEDDING_GRADIENT = { from: "#c9a227", to: "#7c3aed" };
-export const DAILY_GRADIENT = { from: "#bfdbfe", to: "#c7d2fe" };
-
-/** תצוגת סטטוס דוח חתונות — כולל «מאוחר» מחושב לפי תאריך */
-export function isWeddingOrderOverdue(row: { eventDate: string; status: string }): boolean {
-  if (row.status === "COMPLETED" || row.status === "CANCELLED") return false;
-  const d = row.eventDate.slice(0, 10);
-  const today = new Date().toISOString().slice(0, 10);
-  return d < today;
-}
-
-export const WEDDING_STATUS_BADGE_CLASS: Record<string, string> = {
-  IN_PREPARATION: "border-amber-400/90 bg-amber-50 text-amber-950 shadow-sm shadow-amber-100/50",
-  READY: "border-emerald-400/90 bg-emerald-50 text-emerald-950 shadow-sm shadow-emerald-100/50",
-  COMPLETED: "border-sky-400/90 bg-sky-50 text-sky-950 shadow-sm shadow-sky-100/50",
-  OVERDUE: "border-rose-500/90 bg-rose-50 text-rose-950 shadow-sm shadow-rose-100/50",
-  PENDING: "border-amber-300/80 bg-amber-50/90 text-amber-900",
-  CANCELLED: "border-slate-300/80 bg-slate-100 text-slate-600",
-};
-
-export function weddingStatusI18nKey(status: string, overdue: boolean): string {
-  if (overdue) return "admin.weddingOrders.statusOverdue";
-  const map: Record<string, string> = {
-    PENDING: "admin.weddingOrders.statusPreparing",
-    IN_PREPARATION: "admin.weddingOrders.statusPreparing",
-    READY: "admin.weddingOrders.statusReady",
-    COMPLETED: "admin.weddingOrders.statusDelivered",
-    CANCELLED: "admin.weddingOrders.statusCancelled",
-  };
-  return map[status] ?? "admin.weddingOrders.statusPreparing";
-}
-
-export function computeRemainingAmount(totalAmount: number, depositAmount: number): number {
-  const t = Math.max(0, Number(totalAmount) || 0);
-  const d = Math.max(0, Number(depositAmount) || 0);
-  return Math.max(0, t - d);
-}
-
-export function isValidStatus(s: string): s is FutureOrderStatus {
-  return (FUTURE_ORDER_STATUSES as readonly string[]).includes(s);
-}
-
-export function isValidOrderCategory(s: string): s is OrderCategory {
-  return s === ORDER_CATEGORY_DAILY || s === ORDER_CATEGORY_WEDDING;
-}
-
-export function isWeddingKind(eventType: string): boolean {
-  const e = eventType.trim();
-  if (e === ORDER_KIND_WEDDING) return true;
-  return (LEGACY_WEDDING_EVENT_TYPES as readonly string[]).includes(e);
-}
-
-export function categoryFromLegacy(eventType: string): OrderCategory {
-  return isWeddingKind(eventType) ? ORDER_CATEGORY_WEDDING : ORDER_CATEGORY_DAILY;
-}
-
-export function resolveOrderCategory(row: {
-  orderCategory?: string | null;
-  eventType: string;
-}): OrderCategory {
-  if (row.orderCategory === ORDER_CATEGORY_DAILY || row.orderCategory === ORDER_CATEGORY_WEDDING) {
-    return row.orderCategory;
-  }
-  return categoryFromLegacy(row.eventType);
-}
-
-export function eventTypeForCategory(category: OrderCategory): string {
-  return category === ORDER_CATEGORY_WEDDING ? ORDER_KIND_WEDDING : ORDER_KIND_PRIVATE;
-}
-
-export function isValidEventType(s: string): boolean {
-  const e = s.trim();
-  return (
-    e === ORDER_KIND_PRIVATE ||
-    e === ORDER_KIND_WEDDING ||
-    isWeddingKind(e) ||
-    isValidOrderCategory(e)
-  );
+export function isValidOrderCategory(c: string): c is OrderCategory {
+  return c === ORDER_CATEGORY_DAILY || c === ORDER_CATEGORY_WEDDING;
 }
 
 export function moduleToCategory(module: OrdersModule): OrderCategory {
   return module === "wedding" ? ORDER_CATEGORY_WEDDING : ORDER_CATEGORY_DAILY;
 }
 
-const WEDDING_EVENT_TYPES = [ORDER_KIND_WEDDING, ...LEGACY_WEDDING_EVENT_TYPES] as const;
+// ── Statuses ───────────────────────────────────────────────────────────────────
 
-/** תנאי Prisma לסינון קטגוריה (+ eventType לרשומות לפני backfill) */
-export function prismaCategoryFilter(category: OrderCategory) {
-  if (category === ORDER_CATEGORY_WEDDING) {
-    return {
-      OR: [
-        { orderCategory: ORDER_CATEGORY_WEDDING },
-        { eventType: { in: [...WEDDING_EVENT_TYPES] } },
-      ],
-    };
-  }
-  return {
-    AND: [
-      { NOT: { orderCategory: ORDER_CATEGORY_WEDDING } },
-      { eventType: { notIn: [...WEDDING_EVENT_TYPES] } },
-    ],
-  };
+export type FutureOrderStatus =
+  | "open"
+  | "pending"
+  | "in_preparation"
+  | "ready"
+  | "completed"
+  | "cancelled";
+
+export const FUTURE_ORDER_STATUSES: FutureOrderStatus[] = [
+  "open",
+  "pending",
+  "in_preparation",
+  "ready",
+  "completed",
+  "cancelled",
+];
+
+export function isValidStatus(s: string): boolean {
+  return FUTURE_ORDER_STATUSES.includes(s as FutureOrderStatus);
 }
 
-let orderCategoriesBackfilled = false;
+export function statusI18nKey(status: string): string {
+  const MAP: Record<string, string> = {
+    open:           "orders.status.open",
+    pending:        "orders.status.pending",
+    in_preparation: "orders.status.inPreparation",
+    ready:          "orders.status.ready",
+    completed:      "orders.status.completed",
+    cancelled:      "orders.status.cancelled",
+  };
+  return MAP[status] ?? "orders.status.open";
+}
 
-/** מעדכן רשומות ישנות פעם אחת לתהליך (לא בכל GET) */
-export async function backfillOrderCategoriesOnce(
-  prisma: import("@prisma/client").PrismaClient,
-): Promise<void> {
-  if (orderCategoriesBackfilled) return;
-  await prisma.futureOrder.updateMany({
-    where: { eventType: { in: [...WEDDING_EVENT_TYPES] } },
-    data: { orderCategory: ORDER_CATEGORY_WEDDING },
-  });
-  orderCategoriesBackfilled = true;
+export function weddingStatusI18nKey(status: string): string {
+  return statusI18nKey(status);
+}
+
+export const STATUS_BADGE_CLASS: Record<string, string> = {
+  open:           "bg-blue-100 text-blue-800",
+  pending:        "bg-yellow-100 text-yellow-800",
+  in_preparation: "bg-orange-100 text-orange-800",
+  ready:          "bg-green-100 text-green-700",
+  completed:      "bg-gray-100 text-gray-600",
+  cancelled:      "bg-red-100 text-red-700",
+};
+
+export const WEDDING_STATUS_BADGE_CLASS: Record<string, string> = STATUS_BADGE_CLASS;
+
+// ── Visual ─────────────────────────────────────────────────────────────────────
+
+export const DAILY_GRADIENT   = "from-blue-50 to-indigo-50";
+export const WEDDING_GRADIENT = "from-pink-50 to-rose-50";
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+export function computeRemainingAmount(total: number, deposit: number): number {
+  return Math.max(0, total - deposit);
+}
+
+export function isWeddingOrderOverdue(order: { status: string; eventDate?: Date | null }): boolean {
+  if (order.status === "completed" || order.status === "cancelled") return false;
+  if (!order.eventDate) return false;
+  return new Date(order.eventDate) < new Date();
+}
+
+export function eventTypeForCategory(_category: OrderCategory): string {
+  return "OTHER";
+}
+
+export function prismaCategoryFilter(_category: OrderCategory): Record<string, never> {
+  return {};
+}
+
+export async function backfillOrderCategoriesOnce(): Promise<void> {
+  return;
+}
+
+// ── Access ─────────────────────────────────────────────────────────────────────
+
+export function canViewWeddingOrders(session: SessionJwtPayload): boolean {
+  return isAdminRole(session.role);
+}
+
+export function canManageOrderCategory(session: SessionJwtPayload, _category: string): boolean {
+  return isAdminRole(session.role) || session.permissions.includes("employee_clock");
+}
+
+// ── DTO ────────────────────────────────────────────────────────────────────────
+
+export type FutureOrderDto = {
+  id: string;
+  orderNumber: number;
+  customerName: string;
+  phone: string | null;
+  eventType: string;
+  eventDate: Date;
+  eventTime: string | null;
+  itemsDescription: string | null;
+  totalAmount: number;
+  depositAmount: number;
+  remainingAmount: number;
+  depositPaid: boolean;
+  status: string;
+  isCompleted: boolean;
+  completedAt: Date | null;
+  notes: string | null;
+  orderCategory: OrderCategory;
+  address: string | null;
+  guestCount: number | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export function orderToFutureOrder(
+  o: HLWaitOrder & { customer?: HLWaitCustomer | null },
+  category: OrderCategory = ORDER_CATEGORY_DAILY,
+): FutureOrderDto {
+  const num   = parseInt(o.orderNumber.replace(/\D/g, ""), 10) || 0;
+  const total = Number(o.total);
+  return {
+    id:               o.id,
+    orderNumber:      num,
+    customerName:     o.customer?.name ?? "—",
+    phone:            o.customer?.phone ?? null,
+    eventType:        "OTHER",
+    eventDate:        o.createdAt,
+    eventTime:        null,
+    itemsDescription: o.notes,
+    totalAmount:      total,
+    depositAmount:    0,
+    remainingAmount:  total,
+    depositPaid:      false,
+    status:           o.status,
+    isCompleted:      o.status === "completed",
+    completedAt:      o.status === "completed" ? o.updatedAt : null,
+    notes:            o.notes,
+    orderCategory:    category,
+    address:          o.customer?.address ?? null,
+    guestCount:       null,
+    createdAt:        o.createdAt,
+    updatedAt:        o.updatedAt,
+  };
 }

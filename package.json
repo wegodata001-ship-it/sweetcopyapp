@@ -4,16 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && npm run prisma:hlwait:generate && next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "prisma:hlwait:generate": "prisma generate --schema=prisma/hlwait.prisma",
-    "prisma:hlwait:push": "prisma db push --schema=prisma/hlwait.prisma",
-    "demo:setup": "npx tsx scripts/setup-demo.ts",
-    "demo:db-push": "prisma db push --force-reset",
-    "tenant:bootstrap": "npx tsx scripts/bootstrap-tenant.ts",
+    "demo:hlwait:reset": "npx tsx scripts/demo-hlwait-reset.ts",
+    "demo:setup": "npm run demo:hlwait:reset",
+    "db:push": "prisma db push --accept-data-loss",
+    "db:seed": "prisma db seed",
+    "db:sync": "prisma db push --accept-data-loss && prisma generate && prisma db seed",
     "icons:generate": "node scripts/generate-brand-icons.mjs",
-    "postinstall": "prisma generate && npm run prisma:hlwait:generate"
+    "postinstall": "prisma generate"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
@@ -23,7 +23,7 @@
     "@google-cloud/vision": "^4.3.2",
     "@napi-rs/canvas": "^1.0.0",
     "@pdf-lib/fontkit": "^1.1.1",
-    "@prisma/client": "5.22.0",
+    "@prisma/client": "^5.22.0",
     "@react-email/components": "^1.0.12",
     "@react-email/render": "^2.0.8",
     "@supabase/supabase-js": "^2.105.4",
@@ -35,7 +35,7 @@
     "next": "16.2.6",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^5.6.205",
-    "prisma": "5.22.0",
+    "prisma": "^5.22.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "resend": "^6.12.3",

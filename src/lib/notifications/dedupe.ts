@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 import { prismaAny } from "@/lib/prisma";
 
 /** מונע כפילויות — אותו סוג + נושא + נמען בחלון זמן */

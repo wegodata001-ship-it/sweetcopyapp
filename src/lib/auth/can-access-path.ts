@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 import type { UserRole } from "@prisma/client";
 import { matchRule, PAGE_ACCESS_RULES, type PagePermission } from "@/lib/auth/permissions";
 

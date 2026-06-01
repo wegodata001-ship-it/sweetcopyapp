@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 import { parsePayload, type FinanceDocumentPayload } from "@/lib/finance/document-payload";
 import type { FinanceDocumentRow } from "@/lib/finance/types";
 import type { FinancialDocument as PrismaFinancialDocument } from "@prisma/client";

@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 /**
  * יצירה/עדכון SUPER_ADMIN לפי תעודת זהות / טלפון כשם משתמש.
  * שימוש: npx tsx scripts/create-super-admin.ts

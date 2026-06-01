@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireDb } from "@/lib/api-route";
 
@@ -9,7 +9,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   if (block) return block;
   const { id } = await ctx.params;
   try {
-    const row = await prisma.customer.findUnique({ where: { id } });
+    const row = await prisma.hLWaitCustomer.findUnique({ where: { id } });
     if (!row) {
       return NextResponse.json({ ok: false, error: "לא נמצא" }, { status: 404 });
     }
@@ -30,16 +30,16 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     const body = (await req.json()) as {
       name?: string;
       phone?: string | null;
-      customerType?: string | null;
-      openingBalance?: number;
+      email?: string | null;
+      balance?: number;
     };
-    const row = await prisma.customer.update({
+    const row = await prisma.hLWaitCustomer.update({
       where: { id },
       data: {
         ...(body.name !== undefined ? { name: body.name.trim() } : {}),
         ...(body.phone !== undefined ? { phone: body.phone?.trim() || null } : {}),
-        ...(body.customerType !== undefined ? { customerType: body.customerType?.trim() || null } : {}),
-        ...(body.openingBalance !== undefined ? { openingBalance: body.openingBalance } : {}),
+        ...(body.email !== undefined ? { email: body.email?.trim() || null } : {}),
+        ...(body.balance !== undefined ? { balance: body.balance } : {}),
       },
     });
     return NextResponse.json({ ok: true, data: row });
@@ -56,7 +56,7 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
   if (block) return block;
   const { id } = await ctx.params;
   try {
-    await prisma.customer.delete({ where: { id } });
+    await prisma.hLWaitCustomer.delete({ where: { id } });
     return NextResponse.json({ ok: true });
   } catch (e) {
     return NextResponse.json(

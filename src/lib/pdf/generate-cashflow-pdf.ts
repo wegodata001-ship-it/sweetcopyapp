@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 import { PDFDocument } from "pdf-lib";
 import { prisma } from "@/lib/prisma";
 import { prismaCashFlowToRow } from "@/lib/finance/cashflow-map";

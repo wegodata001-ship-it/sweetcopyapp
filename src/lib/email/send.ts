@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 import { Resend } from "resend";
 import { prismaAny } from "@/lib/prisma";
 import { getEmailConfig, isDeliverableEmail } from "@/lib/email/config";

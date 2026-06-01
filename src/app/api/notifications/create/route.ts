@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireDb } from "@/lib/api-route";
 import { getSessionFromCookie } from "@/lib/auth/get-session";
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (target === "ADMIN") {
-      const admins = await prisma.user.findMany({
+      const admins = await prisma.hLWaitUser.findMany({
         where: { role: { in: ["ADMIN", "SUPER_ADMIN"] }, isActive: true },
         select: { id: true },
       });
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, data: { sent: admins.length } });
     }
 
-    const employees = await prisma.user.findMany({
+    const employees = await prisma.hLWaitUser.findMany({
       where: { isActive: true, role: "EMPLOYEE" },
       select: { id: true },
     });

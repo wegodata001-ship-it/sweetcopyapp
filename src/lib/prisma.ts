@@ -1,3 +1,7 @@
+/**
+ * Prisma client — PostgreSQL schema `hlwait` only (@see prisma/schema.prisma).
+ * Does not use `public` ERP tables.
+ */
 import { PrismaClient } from "@prisma/client";
 import { normalizeDatabaseUrl } from "@/lib/prisma-db-health";
 import { assertDemoEnvironmentSafe } from "@/lib/demo";
@@ -28,8 +32,8 @@ function buildPrismaClient(): PrismaClient {
 
 export const prisma = globalForPrisma.prisma ?? buildPrismaClient();
 
-/** גישה למודלים חדשים לפני `prisma generate` מוצלח (למשל EPERM ב־Windows) */
-export const prismaAny = prisma as any;
+/** @deprecated Use `prisma` — hlwait schema only */
+export const prismaAny = prisma;
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
@@ -39,7 +43,6 @@ export async function prismaReady(): Promise<boolean> {
   return Boolean(process.env.DATABASE_URL?.trim());
 }
 
-/** בדיקת חיבור מהירה — לפני טעינת דשבורד */
 export async function pingDatabase(): Promise<boolean> {
   if (!(await prismaReady())) return false;
   try {

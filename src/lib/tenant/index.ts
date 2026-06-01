@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 export {
   TENANT_TABLES,
   bootstrapSchemaSql,

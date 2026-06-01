@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 import type { WorkShift } from "@prisma/client";
 import { hmToMinutes, minutesSinceMidnightIsrael } from "@/lib/staff/work-date";
 

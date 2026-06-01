@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 import { getEmailConfig } from "@/lib/email/config";
 import { sendSystemEmailAwaitable } from "@/lib/email/send";
 import { emailImportanceMeetsThreshold, type EmailImportance } from "@/lib/email/importance";

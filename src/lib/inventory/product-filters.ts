@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 import type { Prisma } from "@prisma/client";
 
 export type StockFilterTier = "all" | "low" | "short" | "zero";

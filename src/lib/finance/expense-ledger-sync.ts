@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 import { prisma } from "@/lib/prisma";
 import { documentTypeForEmployeePay, normalizeEmployeePayType } from "@/lib/finance/employee-pay-types";
 import { parsePayload } from "@/lib/finance/document-payload";

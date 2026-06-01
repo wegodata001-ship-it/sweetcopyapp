@@ -1,14 +1,14 @@
 import { SignJWT, jwtVerify } from "jose";
-import type { UserRole } from "@prisma/client";
+import type { SessionRole } from "@/lib/auth/session-role";
+import { parseSessionRole } from "@/lib/auth/session-role";
 
 const COOKIE_NAME = "wego_session";
 
 export type SessionJwtPayload = {
   sub: string;
   email: string;
-  role: UserRole;
+  role: SessionRole;
   permissions: string[];
-  /** When true, middleware blocks the app until the user changes password. */
   mustChangePassword?: boolean;
 };
 
@@ -18,7 +18,10 @@ function getSecret(): Uint8Array {
   return new TextEncoder().encode(s);
 }
 
-export async function signSessionToken(payload: SessionJwtPayload, maxAgeSec = 60 * 60 * 24 * 7): Promise<string> {
+export async function signSessionToken(
+  payload: SessionJwtPayload,
+  maxAgeSec = 60 * 60 * 24 * 7,
+): Promise<string> {
   return new SignJWT({
     email: payload.email,
     role: payload.role,
@@ -37,7 +40,8 @@ export async function verifySessionToken(token: string): Promise<SessionJwtPaylo
     const { payload } = await jwtVerify(token, getSecret());
     const sub = typeof payload.sub === "string" ? payload.sub : null;
     const email = typeof payload.email === "string" ? payload.email : "";
-    const role = payload.role as UserRole;
+    const roleRaw = typeof payload.role === "string" ? payload.role : "";
+    const role = parseSessionRole(roleRaw);
     const permissions = Array.isArray(payload.permissions)
       ? payload.permissions.filter((p): p is string => typeof p === "string")
       : [];

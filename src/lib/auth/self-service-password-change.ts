@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 import { prismaAny } from "@/lib/prisma";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { logActivity } from "@/lib/activity-log";

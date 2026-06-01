@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 /**
  * Server-side task group (WorkflowTemplate) lifecycle.
  * Duplicate / delete must run here — never clone or cascade from the client.

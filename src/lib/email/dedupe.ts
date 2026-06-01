@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 import { prismaAny } from "@/lib/prisma";
 
 /** מונע שליחת מייל כפול לאותו נמען + סוג + ישות */

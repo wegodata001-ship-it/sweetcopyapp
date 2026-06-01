@@ -22,6 +22,7 @@
 
 | שם משתמש | סיסמה | תפקיד |
 |----------|--------|--------|
+| `superadmin` או `100000018` | `Admin123!` | מנהל מערכת (SUPER_ADMIN) |
 | `admin` | `Admin123!` | מנהל (ADMIN) |
 | `employee` | `Employee123!` | עובד (EMPLOYEE) |
 

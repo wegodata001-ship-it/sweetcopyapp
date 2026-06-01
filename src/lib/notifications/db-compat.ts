@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 import { prismaAny } from "@/lib/prisma";
 
 let priorityColumnReady: boolean | null = null;

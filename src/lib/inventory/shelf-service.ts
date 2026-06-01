@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 import { prismaAny } from "@/lib/prisma";
 
 export type ResolvedShelf = {

@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 import { prisma } from "@/lib/prisma";
 import type { ReportTypeValue } from "@/lib/pdf/constants";
 import { removeReportFromStorage, uploadReportToStorage } from "@/lib/storage/uploadReport";

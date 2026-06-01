@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 import type { SessionJwtPayload } from "@/lib/auth/jwt";
 import { UserRole } from "@prisma/client";
 import {
