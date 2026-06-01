@@ -1,0 +1,59 @@
+#!/usr/bin/env npx tsx
+/**
+ * One-shot DEMO environment setup (separate Supabase project).
+ *
+ * Prerequisites:
+ *   1. Copy .env.demo.example → .env.local with DEMO Supabase credentials
+ *   2. Set DEMO_BLOCKED_SUPABASE_REFS to your production project ref(s)
+ *
+ * Usage:
+ *   npm run demo:setup
+ */
+
+import { execSync } from "node:child_process";
+import { assertDemoEnvironmentSafe } from "../src/lib/demo";
+import { bootstrapTenantSchema } from "../src/lib/tenant";
+
+function run(cmd: string) {
+  console.log(`\n> ${cmd}`);
+  execSync(cmd, { stdio: "inherit", cwd: process.cwd(), env: process.env });
+}
+
+async function main() {
+  console.log("=== Sweet Demo Setup ===\n");
+  assertDemoEnvironmentSafe();
+
+  const schema = process.env.TENANT_DB_SCHEMA?.trim() || "demo";
+  console.log(`Tenant schema: ${schema}`);
+
+  console.log(
+    "\n1/4 Prisma: reset + push schema (public) — DEMO DB only, all data replaced...",
+  );
+  console.log("    Do NOT use `prisma migrate dev` on demo — use this script instead.\n");
+  run("npx prisma db push --force-reset --skip-generate");
+  run("npx prisma generate");
+
+  console.log("\n2/4 Prisma: seed demo users + sample inventory...");
+  run("npx prisma db seed");
+
+  console.log("\n3/4 SQL: bootstrap tenant schema (tables, RLS, grants)...");
+  await bootstrapTenantSchema(schema);
+
+  console.log(
+    "\n4/4 Apply Supabase migrations (demo seed SQL) if using Supabase CLI:",
+  );
+  console.log("   supabase db push");
+  console.log("   — or run SQL files in supabase/migrations/ via SQL Editor\n");
+
+  console.log("=== Done ===");
+  console.log("Login:");
+  console.log("  admin    / Admin123!");
+  console.log("  employee / Employee123!");
+  console.log("\nExpose schema in Supabase → Settings → API → Exposed schemas:", schema);
+  console.log("Start app: npm run dev");
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

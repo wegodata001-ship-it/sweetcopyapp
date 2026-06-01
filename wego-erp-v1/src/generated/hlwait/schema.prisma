@@ -1,0 +1,393 @@
+// HLWAIT tenant ERP — Prisma schema (reference template for multi-schema tenants).
+// Generate: npm run prisma:hlwait:generate
+// The @@schema name matches the default tenant; runtime schema switching uses search_path via tenant config.
+
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../src/generated/hlwait"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+  schemas   = ["hlwait"]
+}
+
+// ---------------------------------------------------------------------------
+// Auth & permissions
+// ---------------------------------------------------------------------------
+
+model HlwaitRole {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @unique
+  label       String
+  permissions Json     @default("{}")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  users HlwaitUser[]
+
+  @@map("roles")
+  @@schema("hlwait")
+}
+
+model HlwaitUser {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  authUserId String?  @unique @map("auth_user_id") @db.Uuid
+  roleId     String   @map("role_id") @db.Uuid
+  name       String
+  email      String?
+  phone      String?
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  role               HlwaitRole                @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  expenses           HlwaitExpense[]
+  tasksAssigned      HlwaitTask[]              @relation("TaskAssignee")
+  notifications      HlwaitNotification[]
+  documentsUploaded  HlwaitDocument[]
+  inventoryMovements HlwaitInventoryMovement[]
+
+  @@index([roleId])
+  @@map("users")
+  @@schema("hlwait")
+}
+
+// ---------------------------------------------------------------------------
+// Catalog
+// ---------------------------------------------------------------------------
+
+model HlwaitCategory {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String
+  description String?
+  parentId    String?  @map("parent_id") @db.Uuid
+  sortOrder   Int      @default(0) @map("sort_order")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  parent   HlwaitCategory?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children HlwaitCategory[] @relation("CategoryTree")
+  products HlwaitProduct[]
+
+  @@index([parentId])
+  @@map("categories")
+  @@schema("hlwait")
+}
+
+model HlwaitSupplier {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  supplierCode   String?  @unique @map("supplier_code")
+  name           String
+  phone          String?
+  email          String?
+  address        String?
+  contactPerson  String?  @map("contact_person")
+  taxId          String?  @map("tax_id")
+  openingBalance Decimal  @default(0) @map("opening_balance") @db.Decimal(14, 2)
+  balance        Decimal  @default(0) @db.Decimal(14, 2)
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  products      HlwaitProduct[]
+  ledgerEntries HlwaitSupplierLedger[]
+  expenses      HlwaitExpense[]
+  payments      HlwaitPayment[]
+
+  @@map("suppliers")
+  @@schema("hlwait")
+}
+
+model HlwaitSupplierLedger {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  supplierId    String   @map("supplier_id") @db.Uuid
+  entryDate     DateTime @map("entry_date") @db.Date
+  docType       String   @default("") @map("doc_type")
+  description   String   @default("")
+  debit         Decimal  @default(0) @db.Decimal(14, 2)
+  credit        Decimal  @default(0) @db.Decimal(14, 2)
+  referenceType String?  @map("reference_type")
+  referenceId   String?  @map("reference_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  supplier HlwaitSupplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@index([supplierId, entryDate])
+  @@map("supplier_ledger")
+  @@schema("hlwait")
+}
+
+model HlwaitCustomer {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customerCode String?  @unique @map("customer_code")
+  name         String
+  phone        String?
+  email        String?
+  address      String?
+  balance      Decimal  @default(0) @db.Decimal(14, 2)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  orders   HlwaitOrder[]
+  payments HlwaitPayment[]
+  income   HlwaitIncome[]
+
+  @@map("customers")
+  @@schema("hlwait")
+}
+
+model HlwaitProduct {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  categoryId    String?  @map("category_id") @db.Uuid
+  supplierId    String?  @map("supplier_id") @db.Uuid
+  sku           String?  @unique
+  name          String
+  barcode       String?  @unique
+  purchasePrice Decimal  @default(0) @map("purchase_price") @db.Decimal(14, 2)
+  salePrice     Decimal  @default(0) @map("sale_price") @db.Decimal(14, 2)
+  currentStock  Decimal  @default(0) @map("current_stock") @db.Decimal(14, 3)
+  minStock      Decimal  @default(0) @map("min_stock") @db.Decimal(14, 3)
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  category           HlwaitCategory?           @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  supplier           HlwaitSupplier?           @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  orderItems         HlwaitOrderItem[]
+  inventory          HlwaitInventory[]
+  inventoryMovements HlwaitInventoryMovement[]
+
+  @@index([categoryId])
+  @@index([supplierId])
+  @@map("products")
+  @@schema("hlwait")
+}
+
+// ---------------------------------------------------------------------------
+// Orders
+// ---------------------------------------------------------------------------
+
+model HlwaitOrder {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customerId  String?   @map("customer_id") @db.Uuid
+  orderNumber String    @unique @map("order_number")
+  status      String    @default("open")
+  subtotal    Decimal   @default(0) @db.Decimal(14, 2)
+  discount    Decimal   @default(0) @db.Decimal(14, 2)
+  total       Decimal   @default(0) @db.Decimal(14, 2)
+  notes       String?
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deliveredAt DateTime? @map("delivered_at") @db.Timestamptz(6)
+  cancelledAt DateTime? @map("cancelled_at") @db.Timestamptz(6)
+
+  customer HlwaitCustomer?   @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  items    HlwaitOrderItem[]
+  income   HlwaitIncome[]
+
+  @@index([customerId])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+  @@map("orders")
+  @@schema("hlwait")
+}
+
+model HlwaitOrderItem {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId   String   @map("order_id") @db.Uuid
+  productId String   @map("product_id") @db.Uuid
+  quantity  Decimal  @db.Decimal(14, 3)
+  unitPrice Decimal  @map("unit_price") @db.Decimal(14, 2)
+  lineTotal Decimal  @map("line_total") @db.Decimal(14, 2)
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  order   HlwaitOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product HlwaitProduct @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+  @@schema("hlwait")
+}
+
+// ---------------------------------------------------------------------------
+// Inventory
+// ---------------------------------------------------------------------------
+
+model HlwaitInventory {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId String   @map("product_id") @db.Uuid
+  location  String   @default("default")
+  quantity  Decimal  @default(0) @db.Decimal(14, 3)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  product HlwaitProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, location])
+  @@index([productId])
+  @@map("inventory")
+  @@schema("hlwait")
+}
+
+model HlwaitInventoryMovement {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId     String   @map("product_id") @db.Uuid
+  movementType  String   @map("movement_type")
+  quantity      Decimal  @db.Decimal(14, 3)
+  fromLocation  String?  @map("from_location")
+  toLocation    String?  @map("to_location")
+  referenceType String?  @map("reference_type")
+  referenceId   String?  @map("reference_id") @db.Uuid
+  note          String?
+  createdBy     String?  @map("created_by") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  product HlwaitProduct @relation(fields: [productId], references: [id], onDelete: Restrict)
+  creator HlwaitUser?   @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@index([productId])
+  @@index([createdAt(sort: Desc)])
+  @@map("inventory_movements")
+  @@schema("hlwait")
+}
+
+// ---------------------------------------------------------------------------
+// Finance
+// ---------------------------------------------------------------------------
+
+model HlwaitPayment {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customerId    String?  @map("customer_id") @db.Uuid
+  supplierId    String?  @map("supplier_id") @db.Uuid
+  amount        Decimal  @db.Decimal(14, 2)
+  paymentMethod String   @default("cash") @map("payment_method")
+  referenceType String?  @map("reference_type")
+  referenceId   String?  @map("reference_id") @db.Uuid
+  paidAt        DateTime @default(now()) @map("paid_at") @db.Timestamptz(6)
+  notes         String?
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  customer HlwaitCustomer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  supplier HlwaitSupplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+
+  @@index([customerId])
+  @@index([supplierId])
+  @@index([paidAt(sort: Desc)])
+  @@map("payments")
+  @@schema("hlwait")
+}
+
+model HlwaitExpense {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  expenseType   String   @map("expense_type")
+  supplierId    String?  @map("supplier_id") @db.Uuid
+  employeeId    String?  @map("employee_id") @db.Uuid
+  amount        Decimal  @db.Decimal(14, 2)
+  description   String   @default("")
+  expenseDate   DateTime @default(now()) @map("expense_date") @db.Date
+  paymentStatus String   @default("unpaid") @map("payment_status")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  supplier HlwaitSupplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  employee HlwaitUser?     @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+
+  @@index([expenseDate(sort: Desc)])
+  @@index([expenseType])
+  @@map("expenses")
+  @@schema("hlwait")
+}
+
+model HlwaitIncome {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  incomeType  String   @map("income_type")
+  customerId  String?  @map("customer_id") @db.Uuid
+  orderId     String?  @map("order_id") @db.Uuid
+  amount      Decimal  @db.Decimal(14, 2)
+  description String   @default("")
+  incomeDate  DateTime @default(now()) @map("income_date") @db.Date
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  customer HlwaitCustomer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  order    HlwaitOrder?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([incomeDate(sort: Desc)])
+  @@index([customerId])
+  @@map("income")
+  @@schema("hlwait")
+}
+
+// ---------------------------------------------------------------------------
+// Operations
+// ---------------------------------------------------------------------------
+
+model HlwaitTask {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title          String
+  description    String?
+  assignedUserId String?   @map("assigned_user_id") @db.Uuid
+  dueDate        DateTime? @map("due_date") @db.Date
+  status         String    @default("pending")
+  priority       String    @default("normal")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  completedAt    DateTime? @map("completed_at") @db.Timestamptz(6)
+
+  assignee HlwaitUser? @relation("TaskAssignee", fields: [assignedUserId], references: [id], onDelete: SetNull)
+
+  @@index([assignedUserId])
+  @@index([dueDate])
+  @@index([status])
+  @@map("tasks")
+  @@schema("hlwait")
+}
+
+model HlwaitNotification {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  title     String
+  body      String    @default("")
+  type      String    @default("info")
+  data      Json      @default("{}")
+  readAt    DateTime? @map("read_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user HlwaitUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("notifications")
+  @@schema("hlwait")
+}
+
+model HlwaitDocument {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title      String
+  filePath   String   @map("file_path")
+  mimeType   String?  @map("mime_type")
+  entityType String?  @map("entity_type")
+  entityId   String?  @map("entity_id") @db.Uuid
+  uploadedBy String?  @map("uploaded_by") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  uploader HlwaitUser? @relation(fields: [uploadedBy], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@map("documents")
+  @@schema("hlwait")
+}
+
+model HlwaitSetting {
+  key       String   @id
+  value     Json     @default("{}")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("settings")
+  @@schema("hlwait")
+}

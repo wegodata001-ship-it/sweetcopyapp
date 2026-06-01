@@ -1,0 +1,473 @@
+@import "tailwindcss";
+@config "../../tailwind.config.ts";
+
+:root {
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --primary: #c9a227;
+  --primary-foreground: #1a1508;
+  --nav-surface: #1a2332;
+  --nav-surface-elevated: #243044;
+  --nav-border: rgba(255, 255, 255, 0.09);
+  --content-surface: #ffffff;
+  --font-main: var(--font-cairo), var(--font-tajawal), system-ui, sans-serif;
+  /* Compact ERP density */
+  --erp-radius: 18px;
+  --erp-gap: 10px;
+  --erp-section-mb: 14px;
+  --erp-container-pad: 18px;
+  --erp-input-h: 44px;
+  --erp-btn-h: 42px;
+  --erp-table-row: 68px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --font-sans: var(--font-geist-sans), var(--font-cairo), var(--font-tajawal), system-ui,
+    sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+/* Base ~15px for Hebrew clarity; compact vs previous 106.25% */
+html {
+  font-size: 100%;
+}
+
+html,
+body {
+  font-family: var(--font-main);
+}
+
+body {
+  background: var(--content-surface);
+  color: var(--foreground);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+
+body.locale-en {
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+body.locale-ar,
+body.locale-he {
+  font-family: var(--font-main);
+}
+
+body.locale-ar {
+  direction: rtl;
+  text-align: right;
+}
+
+.font-arabic-brand {
+  font-family: var(--font-main);
+}
+
+/* مبالغ وأرقام مالية */
+.erp-amount,
+.tabular-nums,
+[data-financial="true"],
+td[data-numeric="true"] {
+  font-variant-numeric: tabular-nums;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+/* Premium surfaces — ERP compact radius */
+@layer components {
+  .app-panel {
+    @apply rounded-[18px] border border-slate-200/90 bg-white shadow-luxury;
+  }
+
+  .app-panel-muted {
+    @apply rounded-[18px] border border-slate-200/80 bg-slate-50/90 shadow-luxury-sm;
+  }
+
+  .erp-card-title,
+  .erp-kpi-label {
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+
+  /** Section titles across the app */
+  .erp-page-title {
+    @apply text-[clamp(2rem,2.6vw,2.625rem)] font-black leading-[1.1] tracking-tight text-slate-950;
+  }
+
+  .erp-section-title {
+    @apply text-[22px] font-extrabold text-slate-950;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+
+  /** Icon / compact action buttons in tables */
+  .erp-icon-btn {
+    @apply inline-flex h-[38px] min-h-[38px] min-w-[38px] items-center justify-center rounded-xl border border-slate-200 bg-white p-0 text-slate-700 shadow-sm transition hover:bg-slate-50;
+  }
+
+  @media (max-width: 1023px) {
+    .erp-icon-btn {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+
+  /** Primary compact button */
+  .erp-btn {
+    @apply inline-flex h-[42px] min-h-[42px] items-center justify-center rounded-[16px] px-[18px] text-sm font-bold transition disabled:opacity-50;
+  }
+
+  @media (max-width: 1023px) {
+    .erp-btn {
+      min-height: 44px;
+    }
+  }
+
+  /** עטיפה לטבלאות רחבות — גלילה פנימית במקום שבירת מסך */
+  .erp-table-scroll {
+    @apply w-full overflow-x-auto overflow-y-visible [-webkit-overflow-scrolling:touch];
+  }
+
+  /** Tables: default data tables under main (exclude .erp-table-loose, .inventory-count-table) */
+  main table:not(.erp-table-loose):not(.inventory-count-table) tbody tr {
+    min-height: var(--erp-table-row);
+  }
+
+  main table:not(.erp-table-loose):not(.inventory-count-table) :is(thead th, tbody td) {
+    padding-block: 12px;
+    padding-inline: 14px;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+
+  body.locale-ar main table:not(.erp-table-loose):not(.inventory-count-table) {
+    direction: rtl;
+    text-align: right;
+  }
+
+  body.locale-ar input,
+  body.locale-ar select,
+  body.locale-ar textarea,
+  body.locale-ar [role="dialog"] {
+    text-align: right;
+  }
+
+  main table.inventory-count-table tbody tr {
+    min-height: 44px;
+  }
+
+  main table.inventory-count-table :is(thead th, tbody td) {
+    padding-block: 6px;
+    padding-inline: 8px;
+    font-size: 13px;
+  }
+}
+
+/* Form controls — compact ERP */
+@layer base {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
+      [type="file"]
+    ):not([type="hidden"]),
+  select {
+    @apply h-11 min-h-[44px] rounded-xl border border-slate-200/90 bg-white px-3 py-0 text-sm shadow-luxury-sm outline-none transition;
+  }
+
+  textarea {
+    @apply min-h-[110px] rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-sm shadow-luxury-sm outline-none transition;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
+      [type="file"]
+    ):not([type="hidden"]):focus,
+  select:focus,
+  textarea:focus {
+    @apply border-luxury-gold ring-2 ring-luxury-gold/25;
+  }
+}
+
+/* ============================================================================
+ * Workflow runner — Monday/Notion-style ERP page
+ *   • wf-pulse        — subtle pulse for the active step card
+ *   • wf-progress     — animated stripes for in-progress bars
+ *   • wf-step-line    — vertical connector line between step circles
+ * ============================================================================ */
+@layer components {
+  .wf-pulse {
+    animation: wf-pulse 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  @keyframes wf-pulse {
+    0%, 100% {
+      box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.12);
+    }
+    50% {
+      box-shadow: 0 0 0 8px rgba(37, 99, 235, 0);
+    }
+  }
+
+  .wf-pulse-late {
+    animation: wf-pulse-late 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  @keyframes wf-pulse-late {
+    0%, 100% {
+      box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.5);
+    }
+    50% {
+      box-shadow: 0 0 0 14px rgba(220, 38, 38, 0);
+    }
+  }
+
+  .wf-progress-stripes {
+    background-image: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.15) 25%,
+      transparent 25%,
+      transparent 50%,
+      rgba(255, 255, 255, 0.15) 50%,
+      rgba(255, 255, 255, 0.15) 75%,
+      transparent 75%,
+      transparent
+    );
+    background-size: 16px 16px;
+    animation: wf-stripes 1.4s linear infinite;
+  }
+  @keyframes wf-stripes {
+    0% {
+      background-position: 0 0;
+    }
+    100% {
+      background-position: 16px 0;
+    }
+  }
+
+  /* Step row — circle + connector line so the list reads as a workflow */
+  .wf-step-row {
+    position: relative;
+  }
+  .wf-step-row::before {
+    content: "";
+    position: absolute;
+    inset-inline-start: 19px;
+    top: 36px;
+    bottom: -10px;
+    width: 2px;
+    background: rgb(226 232 240); /* slate-200 */
+  }
+  .wf-step-row:last-child::before {
+    display: none;
+  }
+  .wf-step-row.is-completed::before {
+    background: rgb(16 185 129); /* emerald-500 */
+  }
+  .wf-step-row.is-active::before {
+    background: linear-gradient(
+      to bottom,
+      rgb(37 99 235),
+      rgb(226 232 240)
+    );
+  }
+
+  /* Employee task cards — production workflow focus */
+  .etask-card-active {
+    animation: etask-expand 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @keyframes etask-expand {
+    from {
+      opacity: 0.85;
+      transform: scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .etask-timer-pulse {
+    animation: etask-timer-tick 1s ease-in-out infinite;
+  }
+  @keyframes etask-timer-tick {
+    0%,
+    100% {
+      opacity: 1;
+      text-shadow: 0 0 0 rgba(37, 99, 235, 0);
+    }
+    50% {
+      opacity: 0.92;
+      text-shadow: 0 0 20px rgba(37, 99, 235, 0.35);
+    }
+  }
+
+  /* Task group cards grid — mobile-first Kanban-style */
+  .tcg-page {
+    @apply bg-gradient-to-b from-slate-100/80 via-violet-50/30 to-slate-50/50;
+  }
+  .tcg-card {
+    @apply motion-safe:transition-transform;
+  }
+  .tcg-fade-in {
+    animation: tcg-fade-in 0.25s ease-out;
+  }
+  @keyframes tcg-fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes cashflowFilterIn {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* יומן תזרים — מפרידי עמודות עדינים (דסקטופ) */
+  .cashflow-journal-table th,
+  .cashflow-journal-table td {
+    padding-inline: 1rem;
+    padding-block: 0.625rem;
+  }
+  @media (min-width: 1024px) {
+    .cashflow-journal-table th,
+    .cashflow-journal-table td {
+      padding-inline: 1.25rem;
+    }
+  }
+  .cashflow-journal-table thead th {
+    background-color: rgb(248 250 252 / 0.95);
+  }
+  .cashflow-journal-table thead tr {
+    border-bottom: 1px solid #edf1f5;
+  }
+  .cashflow-journal-table th:not(:first-child),
+  .cashflow-journal-table td:not(:first-child) {
+    border-inline-start: 1px solid #edf1f5;
+  }
+  .cashflow-journal-table tbody tr.cashflow-journal-row {
+    border-bottom: 1px solid #edf1f5;
+    transition: background-color 0.15s ease;
+  }
+  .cashflow-journal-table tbody tr.cashflow-journal-row:hover {
+    background-color: #fafafa;
+  }
+  .cashflow-journal-table tbody tr.cashflow-journal-row:hover td {
+    border-inline-start-color: #edf1f5;
+  }
+
+  .tcg-pulse-soft {
+    animation: tcg-pulse-soft 2s ease-in-out infinite;
+  }
+  @keyframes tcg-pulse-soft {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.85;
+    }
+  }
+  .tcg-mini-card:active {
+    @apply scale-[0.99];
+  }
+
+  .tcg-card-enter {
+    animation: tcg-card-enter 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @keyframes tcg-card-enter {
+    from {
+      opacity: 0;
+      transform: scale(0.92) translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  .tcg-card-exit {
+    animation: tcg-card-exit 0.32s ease-in forwards;
+  }
+  @keyframes tcg-card-exit {
+    to {
+      opacity: 0;
+      transform: scale(0.9);
+      max-height: 0;
+      margin: 0;
+      padding: 0;
+    }
+  }
+
+  /* Employee work order — groups accordion + task lock */
+  .ew-accordion-grid {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .ew-accordion-grid.ew-accordion-open {
+    grid-template-rows: 1fr;
+  }
+  .ew-accordion-inner {
+    overflow: hidden;
+  }
+  .ew-task-locked {
+    filter: grayscale(0.35);
+  }
+  .ew-task-unlock-glow {
+    animation: ew-unlock-glow 1.2s ease-out;
+  }
+  @keyframes ew-unlock-glow {
+    from {
+      box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.5);
+    }
+    to {
+      box-shadow: 0 0 0 8px rgba(139, 92, 246, 0);
+    }
+  }
+  .ew-task-complete-pop {
+    animation: ew-task-complete-pop 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @keyframes ew-task-complete-pop {
+    0% {
+      transform: scale(1);
+    }
+    40% {
+      transform: scale(1.02);
+      background-color: rgb(220 252 231);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+  .ew-progress-bar {
+    transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+.ws-hero {
+  background: linear-gradient(135deg, #0f172a 0%, #312e81 45%, #059669 100%);
+  box-shadow: 0 12px 40px rgba(49, 46, 129, 0.25);
+}
+
+/* Arabic — long labels on financial register tabs */
+.locale-ar .finance-register-tab {
+  min-height: 52px;
+  height: auto;
+  padding-block: 10px;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.35;
+}

@@ -1,0 +1,16 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+debug.log
+*.log
+
+# Secrets
+.env
+.env.local
+**/.env.local
+
+# Dependencies & build (per package)
+**/node_modules/
+**/.next/
+**/out/
+**/.vercel/
