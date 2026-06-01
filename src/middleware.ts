@@ -15,10 +15,15 @@ export async function middleware(request: NextRequest) {
   const locale = normalizeLocale(localeCookie);
   const t = createTranslator(locale);
 
-  if (pathname.startsWith("/_next") || pathname === "/favicon.ico") {
+  if (
+    pathname.startsWith("/_next") ||
+    pathname === "/favicon.ico" ||
+    pathname === "/manifest.webmanifest" ||
+    pathname === "/manifest.json"
+  ) {
     return NextResponse.next();
   }
-  if (/\.(?:svg|png|jpg|jpeg|gif|webp|ico)$/.test(pathname)) {
+  if (/\.(?:svg|png|jpg|jpeg|gif|webp|ico|webmanifest)$/.test(pathname)) {
     return NextResponse.next();
   }
 
