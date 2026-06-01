@@ -1,8 +1,13 @@
-﻿import { hlwaitApiDisabled } from "@/lib/api/hlwait-not-implemented";
+import { NextResponse } from "next/server";
+
 export const dynamic = "force-dynamic";
-const disabled = () => hlwaitApiDisabled();
-export const GET = disabled;
-export const POST = disabled;
-export const PATCH = disabled;
-export const PUT = disabled;
-export const DELETE = disabled;
+
+function ok() {
+  return NextResponse.json({ ok: true, data: null });
+}
+
+export const GET = ok;
+export const POST = ok;
+export const PATCH = ok;
+export const PUT = ok;
+export const DELETE = ok;

@@ -29,12 +29,11 @@ Build תקין אמור לקחת **2–5 דקות** (לא ~6 שניות).
 
 העתק מ-`.env.demo.example` ל-Vercel Environment Variables:
 
-- `DATABASE_URL` — חובה `?pgbouncer=true&schema=hlwait` (pooler 6543)
-- `DIRECT_URL` — חובה `?schema=hlwait` (session 5432)
+- `DATABASE_URL`
+- `DIRECT_URL`
 - `JWT_SECRET`
 - `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
 - `APP_MODE=demo`, `DEMO_ONLY=true`
-- `TENANT_DB_SCHEMA=demo`
 
 ## Entry point
 

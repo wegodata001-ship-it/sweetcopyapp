@@ -69,9 +69,6 @@ SUPABASE_SERVICE_ROLE_KEY=...
 DATABASE_URL=postgresql://postgres.YOUR_DEMO_REF:...
 DIRECT_URL=postgresql://postgres.YOUR_DEMO_REF:...
 
-TENANT_DB_SCHEMA=demo
-NEXT_PUBLIC_TENANT_DB_SCHEMA=demo
-
 JWT_SECRET=your-long-random-secret
 
 # חסימת ייצור (מומלץ): ref מ-URL של Supabase ייצור
@@ -173,7 +170,7 @@ const db = getTenantSupabaseServiceClient();
 const { data } = await db!.fromTenant("customers").select("*");
 ```
 
-Schema נקבע מ-`TENANT_DB_SCHEMA` — ללא hardcode בקוד.
+המערכת משתמשת ב-schema `public` בלבד, עם טבלאות prefix `hlwait_`.
 
 ---
 

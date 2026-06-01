@@ -36,6 +36,10 @@ export async function POST(req: NextRequest) {
       amount: number;
       paymentMethod?: string | null;
       notes?: string | null;
+      file_url?: string | null;
+      file_name?: string | null;
+      bucket_name?: string | null;
+      storage_path?: string | null;
     };
     if (!body.customerId || !(body.amount > 0)) {
       return NextResponse.json({ ok: false, error: "לקוח וסכום חיוביים נדרשים" }, { status: 400 });
@@ -46,6 +50,10 @@ export async function POST(req: NextRequest) {
         amount: body.amount,
         paymentMethod: body.paymentMethod?.trim() || "cash",
         notes: body.notes?.trim() || null,
+        fileUrl: body.file_url?.trim() || null,
+        fileName: body.file_name?.trim() || null,
+        bucketName: body.bucket_name?.trim() || null,
+        storagePath: body.storage_path?.trim() || null,
       },
       include: { customer: { select: { name: true } } },
     });

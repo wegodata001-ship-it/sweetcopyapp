@@ -70,7 +70,7 @@ export function createTenantSupabaseClient(
 
 let browserTenantClient: TenantSupabaseClient | null = null;
 
-/** Browser singleton — uses NEXT_PUBLIC_TENANT_DB_SCHEMA. */
+/** Browser singleton — uses public schema. */
 export function getTenantSupabaseBrowserClient(): TenantSupabaseClient | null {
   if (typeof window === "undefined") return null;
   if (!isTenantSupabaseConfigured()) return null;

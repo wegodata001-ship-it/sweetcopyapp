@@ -27,6 +27,6 @@ This runs:
 
 ## Prisma schema
 
-Single file: `prisma/schema.prisma` — all models use `@@schema("hlwait")`.
+Single file: `prisma/schema.prisma` — all models map to `public.hlwait_*` tables.
 
 Legacy `public.*` ERP tables are **not** managed by Prisma anymore; they may still exist on old DBs but are unused by this schema.

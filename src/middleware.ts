@@ -8,7 +8,6 @@ import { API_ACCESS_RULES, PAGE_ACCESS_RULES, matchRule } from "@/lib/auth/permi
 import { WEGO_LOCALE_COOKIE, normalizeLocale } from "@/lib/i18n/constants";
 import { createTranslator } from "@/lib/i18n/translator";
 import { isAdminRole, isPureEmployeeRole } from "@/lib/auth/session-role";
-import { blockDemoDangerousApi } from "@/lib/api/demo-guard";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -167,9 +166,6 @@ export async function middleware(request: NextRequest) {
     if (request.method === "OPTIONS") {
       return forward();
     }
-
-    const demoBlock = blockDemoDangerousApi(apiPath);
-    if (demoBlock) return demoBlock;
 
     if (
       (apiPath === "/api/auth/change-password" || apiPath === "/api/me/password") &&

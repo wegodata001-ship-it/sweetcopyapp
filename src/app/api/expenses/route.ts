@@ -44,6 +44,10 @@ export async function GET(req: NextRequest) {
         supplierName: e.supplier?.name ?? null,
         employeeId:  e.employeeId,
         employeeName: e.employee?.name ?? null,
+        file_url:    e.fileUrl,
+        file_name:   e.fileName,
+        bucket_name: e.bucketName,
+        storage_path: e.storagePath,
         createdAt:   e.createdAt,
       })),
     });
@@ -66,6 +70,10 @@ export async function POST(req: NextRequest) {
       supplierId?: string | null;
       employeeId?: string | null;
       expenseDate?: string | null;
+      file_url?: string | null;
+      file_name?: string | null;
+      bucket_name?: string | null;
+      storage_path?: string | null;
     };
 
     if (!(body.amount > 0)) {
@@ -79,6 +87,10 @@ export async function POST(req: NextRequest) {
         supplierId:  body.supplierId || null,
         employeeId:  body.employeeId || null,
         expenseDate: body.expenseDate ? new Date(body.expenseDate) : new Date(),
+        fileUrl:     body.file_url?.trim() || null,
+        fileName:    body.file_name?.trim() || null,
+        bucketName:  body.bucket_name?.trim() || null,
+        storagePath: body.storage_path?.trim() || null,
       },
       include: {
         supplier: { select: { name: true } },

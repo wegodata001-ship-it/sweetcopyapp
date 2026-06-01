@@ -1,14 +1,4 @@
-/**
- * Prisma client — PostgreSQL schema `hlwait` only (@see prisma/schema.prisma).
- * Does not use `public` ERP tables.
- */
 import { PrismaClient } from "@prisma/client";
-import { normalizeDatabaseUrl } from "@/lib/prisma-db-health";
-import { assertDemoEnvironmentSafe } from "@/lib/demo";
-
-if (process.env.DEMO_ONLY === "1" || process.env.DEMO_ONLY === "true" || process.env.APP_MODE === "demo") {
-  assertDemoEnvironmentSafe();
-}
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined };
 
@@ -19,16 +9,13 @@ function activeDatabaseUrl(): string | undefined {
   const raw = (
     useDirect ? process.env.DIRECT_URL : process.env.DATABASE_URL
   )?.trim();
-  return raw ? normalizeDatabaseUrl(raw) : undefined;
+  return raw || undefined;
 }
 
 function buildPrismaClient(): PrismaClient {
   const url = activeDatabaseUrl();
   if (process.env.NODE_ENV !== "production") {
     console.log("DATABASE_URL =", process.env.DATABASE_URL);
-    if (url && url !== process.env.DATABASE_URL?.trim()) {
-      console.log("DATABASE_URL (normalized) =", url);
-    }
   }
   return new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
@@ -38,7 +25,7 @@ function buildPrismaClient(): PrismaClient {
 
 export const prisma = globalForPrisma.prisma ?? buildPrismaClient();
 
-/** @deprecated Use `prisma` — hlwait schema only */
+/** @deprecated Use `prisma` */
 export const prismaAny = prisma;
 
 if (process.env.NODE_ENV !== "production") {

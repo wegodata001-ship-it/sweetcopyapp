@@ -25,10 +25,10 @@ async function main() {
 
   // ── 1. Schemas ──────────────────────────────────────────────────────────────
   console.log("\n══ SELECT schema_name FROM information_schema.schemata ══\n");
-  const schemas = await prisma.$queryRaw<{ schema_name: string }[]>`
+  const dbNamespaces = await prisma.$queryRaw<{ schema_name: string }[]>`
     SELECT schema_name FROM information_schema.schemata ORDER BY schema_name
   `;
-  for (const s of schemas) console.log(" ", s.schema_name);
+  for (const s of dbNamespaces) console.log(" ", s.schema_name);
 
   // ── 2. Tables in hlwait ────────────────────────────────────────────────────
   console.log("\n══ Tables in hlwait schema ══\n");
@@ -51,11 +51,11 @@ async function main() {
     console.log(`  ${t.table_name.padEnd(25)} ${counts[t.table_name]} rows`);
   }
 
-  // ── 4. SELECT * FROM hlwait.hlwait_users ──────────────────────────────────
-  console.log("\n══ SELECT * FROM hlwait.hlwait_users ══\n");
+  // ── 4. SELECT * FROM public.hlwait_users ─────────────────────────────────
+  console.log("\n══ SELECT * FROM public.hlwait_users ══\n");
   const users = await prisma.$queryRaw<Record<string, unknown>[]>`
     SELECT id, email, name, role, is_active, created_at
-    FROM hlwait.hlwait_users
+    FROM public.hlwait_users
     ORDER BY created_at
   `;
   console.log(

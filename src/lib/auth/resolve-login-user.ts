@@ -5,7 +5,7 @@ import { toApiUser } from "@/lib/auth/user-dto";
 
 export type LoginUserRow = ApiUser & { passwordHash: string };
 
-/** Resolves a login identifier → hlwait.hlwait_users row */
+/** Resolves a login identifier → public.hlwait_users row */
 export async function resolveLoginUser(rawIdentifier: string): Promise<LoginUserRow | null> {
   const trimmed = rawIdentifier.trim();
   if (!trimmed) return null;

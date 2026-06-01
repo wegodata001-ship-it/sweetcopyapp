@@ -16,30 +16,3 @@ export function isDbConnectionError(e: unknown): boolean {
   );
 }
 
-/** Default PostgreSQL schema for hlwait-only Prisma models */
-export const PRISMA_DB_SCHEMA = "hlwait";
-
-/** פרמטרים מומלצים ל-Supabase pooler (פורט 6543) + schema hlwait */
-export function normalizeDatabaseUrl(raw: string): string {
-  const url = raw.trim();
-  if (!url) return url;
-  try {
-    const u = new URL(url);
-    if (u.port === "6543" || u.hostname.includes("pooler")) {
-      if (!u.searchParams.has("pgbouncer")) u.searchParams.set("pgbouncer", "true");
-      if (!u.searchParams.has("connection_limit")) {
-        u.searchParams.set("connection_limit", "10");
-      }
-    }
-    if (!u.searchParams.has("connect_timeout")) {
-      u.searchParams.set("connect_timeout", "15");
-    }
-    // Prisma multi-schema: default connection schema (not public)
-    if (!u.searchParams.has("schema")) {
-      u.searchParams.set("schema", PRISMA_DB_SCHEMA);
-    }
-    return u.toString();
-  } catch {
-    return url;
-  }
-}

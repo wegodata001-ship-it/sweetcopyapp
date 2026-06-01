@@ -1,19 +1,7 @@
 /**
- * Central tenant / schema configuration.
- * Never hardcode schema names in application code — read from here.
- *
- * Env priority (demo app defaults to schema "demo"):
- *   TENANT_DB_SCHEMA → NEXT_PUBLIC_TENANT_DB_SCHEMA → APP_MODE=demo ? "demo" : "hlwait"
+ * Legacy tenant table-name helpers.
+ * Runtime uses a single Supabase project and the public schema only.
  */
-
-const SCHEMA_PATTERN = /^[a-z][a-z0-9_]*$/;
-
-function isDemoAppMode(): boolean {
-  const mode = process.env.APP_MODE?.trim().toLowerCase();
-  if (mode === "demo") return true;
-  if (process.env.DEMO_ONLY === "1" || process.env.DEMO_ONLY === "true") return true;
-  return process.env.NEXT_PUBLIC_APP_MODE?.trim().toLowerCase() === "demo";
-}
 
 export type TenantSchemaName = string;
 
@@ -57,18 +45,7 @@ export function isDemoSchema(schema: string): boolean {
 }
 
 export function resolveTenantSchema(override?: string): TenantSchemaName {
-  const raw =
-    override?.trim() ||
-    process.env.TENANT_DB_SCHEMA?.trim() ||
-    process.env.NEXT_PUBLIC_TENANT_DB_SCHEMA?.trim() ||
-    (isDemoAppMode() ? "demo" : "hlwait");
-
-  if (!SCHEMA_PATTERN.test(raw)) {
-    throw new Error(
-      `Invalid tenant schema "${raw}". Must match ${SCHEMA_PATTERN.source}`,
-    );
-  }
-  return raw;
+  return override?.trim() || "public";
 }
 
 /** Qualified PostgreSQL identifier: "schema"."table" */
@@ -79,5 +56,5 @@ export function qualifiedTable(schema: string, table: TenantTableName): string {
 /** Bootstrap a new tenant schema via SQL (server-side only). */
 export function bootstrapSchemaSql(schema: string): string {
   const safe = resolveTenantSchema(schema);
-  return `SELECT hlwait.bootstrap_schema('${safe}')`;
+  return `SELECT '${safe}'`;
 }

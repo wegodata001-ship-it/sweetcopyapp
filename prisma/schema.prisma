@@ -1,13 +1,11 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["multiSchema"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
-  schemas   = ["hlwait"]
 }
 
 model HLWaitUser {
@@ -23,7 +21,6 @@ model HLWaitUser {
   tasksAssigned      HLWaitTask[]
 
   @@map("hlwait_users")
-  @@schema("hlwait")
 }
 
 model HLWaitCustomer {
@@ -40,7 +37,6 @@ model HLWaitCustomer {
   payments  HLWaitPayment[]
 
   @@map("hlwait_customers")
-  @@schema("hlwait")
 }
 
 model HLWaitSupplier {
@@ -56,7 +52,6 @@ model HLWaitSupplier {
   products  HLWaitProduct[]
 
   @@map("hlwait_suppliers")
-  @@schema("hlwait")
 }
 
 model HLWaitProduct {
@@ -76,7 +71,6 @@ model HLWaitProduct {
 
   @@index([supplierId])
   @@map("hlwait_products")
-  @@schema("hlwait")
 }
 
 model HLWaitOrder {
@@ -94,7 +88,6 @@ model HLWaitOrder {
 
   @@index([customerId])
   @@map("hlwait_orders")
-  @@schema("hlwait")
 }
 
 model HLWaitOrderItem {
@@ -112,7 +105,6 @@ model HLWaitOrderItem {
   @@index([orderId])
   @@index([productId])
   @@map("hlwait_order_items")
-  @@schema("hlwait")
 }
 
 model HLWaitPayment {
@@ -135,7 +127,6 @@ model HLWaitPayment {
   @@index([customerId])
   @@index([supplierId])
   @@map("hlwait_payments")
-  @@schema("hlwait")
 }
 
 model HLWaitInventory {
@@ -149,7 +140,6 @@ model HLWaitInventory {
 
   @@unique([productId, location])
   @@map("hlwait_inventory")
-  @@schema("hlwait")
 }
 
 model HLWaitTask {
@@ -165,7 +155,6 @@ model HLWaitTask {
 
   @@index([assignedUserId])
   @@map("hlwait_tasks")
-  @@schema("hlwait")
 }
 
 model HLWaitExpense {
@@ -185,7 +174,6 @@ model HLWaitExpense {
   supplier    HLWaitSupplier? @relation(fields: [supplierId], references: [id])
 
   @@map("hlwait_expenses")
-  @@schema("hlwait")
 }
 
 model HLWaitIncome {
@@ -205,5 +193,4 @@ model HLWaitIncome {
   order       HLWaitOrder?    @relation(fields: [orderId], references: [id])
 
   @@map("hlwait_income")
-  @@schema("hlwait")
 }

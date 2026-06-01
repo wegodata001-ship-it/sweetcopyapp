@@ -76,15 +76,3 @@ export function checkDemoEnvironmentSafety(): DemoSafetyCheck {
   return { ok: violations.length === 0, violations };
 }
 
-export function assertDemoEnvironmentSafe(): void {
-  const { ok, violations } = checkDemoEnvironmentSafety();
-  if (!ok) {
-    throw new Error(
-      [
-        "DEMO_ONLY safety check failed — refusing to connect to production.",
-        ...violations.map((v) => `  • ${v}`),
-        "Use a separate Supabase DEMO project and .env.demo.local (see README).",
-      ].join("\n"),
-    );
-  }
-}

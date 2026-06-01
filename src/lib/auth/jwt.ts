@@ -7,7 +7,7 @@ const COOKIE_NAME = "wego_session";
 export const SESSION_MAX_AGE_SEC = 60 * 60 * 24 * 7;
 
 export type SessionJwtPayload = {
-  /** User id (hlwait.hlwait_users.id) */
+  /** User id (public.hlwait_users.id) */
   userId: string;
   /** Alias for legacy code using `session.sub` */
   sub: string;

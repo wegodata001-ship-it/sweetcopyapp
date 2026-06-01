@@ -1,6 +1,6 @@
 import type { HLWaitUser } from "@prisma/client";
 
-/** API/session shape for hlwait.hlwait_users */
+/** API/session shape for public.hlwait_users */
 export type ApiUser = {
   id: string;
   fullName: string;
